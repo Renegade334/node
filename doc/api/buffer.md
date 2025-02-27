@@ -1120,11 +1120,13 @@ console.log(buf[1]); // 255
 added: v5.10.0
 -->
 
-* `array` {integer\[]}
+* `array` {integer\[]|TypedArray|Object}
 * Returns: {Buffer}
 
-Allocates a new `Buffer` using an `array` of bytes in the range `0` – `255`.
-Array entries outside that range will be truncated to fit into it.
+Allocates a new `Buffer`, using the elements of `array` as byte values.
+
+`array` can be an array, `TypedArray` or [array-like object][] containing
+unsigned 8-bit integers in the range `0` – `255`.
 
 ```mjs
 import { Buffer } from 'node:buffer';
@@ -1140,13 +1142,71 @@ const { Buffer } = require('node:buffer');
 const buf = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
 ```
 
-If `array` is an `Array`-like object (that is, one with a `length` property of
-type `number`), it is treated as if it is an array, unless it is a `Buffer` or
-a `Uint8Array`. This means all other `TypedArray` variants get treated as an
-`Array`. To create a `Buffer` from the bytes backing a `TypedArray`, use
-[`Buffer.copyBytesFrom()`][].
+Values that are not unsigned 8-bit integers will be truncated and taken modulo
+2^8 to coerce them to a valid byte value.
 
-A `TypeError` will be thrown if `array` is not an `Array` or another type
+```mjs
+import { Buffer } from 'node:buffer';
+
+const buf1 = Buffer.from([0x1234, 0xabcd]);
+console.log(buf1);
+// Prints: Buffer <34 cd>
+
+const buf2 = Buffer.from([1.1, 2.2]);
+console.log(buf2);
+// Prints: Buffer <01 02>
+```
+
+```cjs
+const { Buffer } = require('node:buffer');
+
+const buf1 = Buffer.from([0x1234, 0xabcd]);
+console.log(buf1);
+// Prints: Buffer <34 cd>
+
+const buf2 = Buffer.from([1.1, 2.2]);
+console.log(buf2);
+// Prints: Buffer <01 02>
+```
+
+When using `TypedArray` variants other than `Uint8Array`, note that
+`Buffer.from(array)` will make a new `Buffer` from the array's _elements_, not
+its underlying bytes. To copy the individual _bytes_ from a `TypedArray`'s
+array buffer into a new `Buffer`, use [`Buffer.copyBytesFrom()`][].
+
+```mjs
+import { Buffer } from 'node:buffer';
+
+const buf1 = Buffer.from(new Uint8Array([0x12, 0x12, 0x34, 0x34]));
+console.log(buf1);
+// Prints: <Buffer 12 12 34 34>
+
+const buf2 = Buffer.from(new Int16Array([0x1212, 0x3434]));
+console.log(buf2);
+// Prints: <Buffer 12 34>
+
+const buf3 = Buffer.copyBytesFrom(new Int16Array([0x1212, 0x3434]));
+console.log(buf3);
+// Prints: <Buffer 12 12 34 34>
+```
+
+```cjs
+const { Buffer } = require('node:buffer');
+
+const buf1 = Buffer.from(new Uint8Array([0x12, 0x12, 0x34, 0x34]));
+console.log(buf1);
+// Prints: <Buffer 12 12 34 34>
+
+const buf2 = Buffer.from(new Int16Array([0x1212, 0x3434]));
+console.log(buf2);
+// Prints: <Buffer 12 34>
+
+const buf3 = Buffer.copyBytesFrom(new Int16Array([0x1212, 0x3434]));
+console.log(buf3);
+// Prints: <Buffer 12 12 34 34>
+```
+
+A `TypeError` will be thrown if `array` is not array-like or another type
 appropriate for `Buffer.from()` variants.
 
 `Buffer.from(array)` and [`Buffer.from(string)`][] may also use the internal
@@ -1275,8 +1335,7 @@ console.log(buf);
 added: v5.10.0
 -->
 
-* `buffer` {Buffer|Uint8Array} An existing `Buffer` or {Uint8Array} from
-  which to copy data.
+* `buffer` {Buffer} An existing `Buffer` from which to copy data.
 * Returns: {Buffer}
 
 Copies the passed `buffer` data onto a new `Buffer` instance.
@@ -4980,7 +5039,8 @@ changes:
 
 > Stability: 0 - Deprecated: Use [`Buffer.from(array)`][] instead.
 
-* `array` {integer\[]} An array of bytes to copy from.
+* `array` {integer\[]|TypedArray|Object} An array, `TypedArray` or
+  [array-like object][] of bytes to copy from.
 
 See [`Buffer.from(array)`][].
 
@@ -5037,8 +5097,7 @@ changes:
 
 > Stability: 0 - Deprecated: Use [`Buffer.from(buffer)`][] instead.
 
-* `buffer` {Buffer|Uint8Array} An existing `Buffer` or {Uint8Array} from
-  which to copy data.
+* `buffer` {Buffer} An existing `Buffer` from which to copy data.
 
 See [`Buffer.from(buffer)`][].
 
@@ -5543,6 +5602,7 @@ introducing security vulnerabilities into an application.
 [`String.prototype.indexOf()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/indexOf
 [`String.prototype.lastIndexOf()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/lastIndexOf
 [`String.prototype.length`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length
+[`ToUint8`]: https://tc39.es/ecma262/#sec-touint8
 [`TypedArray.from()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/from
 [`TypedArray.prototype.set()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/set
 [`TypedArray.prototype.slice()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/slice
@@ -5563,6 +5623,7 @@ introducing security vulnerabilities into an application.
 [`buffer.kMaxLength`]: #bufferkmaxlength
 [`util.inspect()`]: util.md#utilinspectobject-options
 [`v8::TypedArray::kMaxLength`]: https://v8.github.io/api/head/classv8_1_1TypedArray.html#a54a48f4373da0850663c4393d843b9b0
+[array-like object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Indexed_collections#working_with_array-like_objects
 [base64url]: https://tools.ietf.org/html/rfc4648#section-5
 [endianness]: https://en.wikipedia.org/wiki/Endianness
 [iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols
