@@ -201,6 +201,30 @@ void JSValueToSQLiteResult(Isolate* isolate,
   }
 }
 
+inline int CREATE_INTERNAL_SAVEPOINT(sqlite3* db, const char* name) {
+  const std::string command =
+      std::string("SAVEPOINT __nodesqlite_") + name;
+  return sqlite3_exec(db, command.c_str(), nullptr, nullptr, nullptr);
+}
+
+inline int RELEASE_INTERNAL_SAVEPOINT_ON_SUCCESS(sqlite3* db,
+                                                 const char* name) {
+  const std::string command =
+      std::string("RELEASE SAVEPOINT __nodesqlite_") + name;
+  return sqlite3_exec(db, command.c_str(), nullptr, nullptr, nullptr);
+}
+
+inline int RELEASE_INTERNAL_SAVEPOINT_ON_FAILURE(sqlite3* db,
+                                                 const char* name) {
+  const std::string command =
+      std::string("ROLLBACK TRANSACTION TO SAVEPOINT __nodesqlite_") + name;
+  int r = sqlite3_exec(db, command.c_str(), nullptr, nullptr, nullptr);
+  if (r != SQLITE_OK) {
+    return r;
+  }
+  return RELEASE_INTERNAL_SAVEPOINT_ON_SUCCESS(db, name);
+}
+
 class DatabaseSync;
 
 inline void THROW_ERR_SQLITE_ERROR(Isolate* isolate, DatabaseSync* db) {
@@ -1541,6 +1565,8 @@ void DatabaseSync::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
   conflictCallback = nullptr;
   filterCallback = nullptr;
 
+  bool filterCallbackThrew = false;
+
   DatabaseSync* db;
   ASSIGN_OR_RETURN_UNWRAP(&db, args.This());
   Environment* env = Environment::GetCurrent(args);
@@ -1577,12 +1603,10 @@ void DatabaseSync::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
       Local<Function> conflictFunc = conflictValue.As<Function>();
       conflictCallback = [env, conflictFunc](int conflictType) -> int {
         Local<Value> argv[] = {Integer::New(env->isolate(), conflictType)};
-        TryCatch try_catch(env->isolate());
-        Local<Value> result =
-            conflictFunc->Call(env->context(), Null(env->isolate()), 1, argv)
-                .FromMaybe(Local<Value>());
-        if (try_catch.HasCaught()) {
-          try_catch.ReThrow();
+        Local<Value> result;
+        if (!conflictFunc->Call(env->context(), Null(env->isolate()), 1, argv)
+                 .ToLocal(&result)) {
+          // An error will have been scheduled.
           return SQLITE_CHANGESET_ABORT;
         }
         constexpr auto invalid_value = -1;
@@ -1591,19 +1615,13 @@ void DatabaseSync::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
       };
     }
 
-    bool hasIt;
-    if (!options->HasOwnProperty(env->context(), env->filter_string())
-             .To(&hasIt)) {
+    Local<Value> filterValue;
+    if (!options->Get(env->context(), env->filter_string())
+             .ToLocal(&filterValue)) {
+      // An error will have been scheduled.
       return;
     }
-    if (hasIt) {
-      Local<Value> filterValue;
-      if (!options->Get(env->context(), env->filter_string())
-               .ToLocal(&filterValue)) {
-        // An error will have been scheduled.
-        return;
-      }
-
+    if (!filterValue->IsUndefined()) {
       if (!filterValue->IsFunction()) {
         THROW_ERR_INVALID_ARG_TYPE(
             env->isolate(),
@@ -1613,22 +1631,46 @@ void DatabaseSync::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
 
       Local<Function> filterFunc = filterValue.As<Function>();
 
-      filterCallback = [env, filterFunc](std::string item) -> bool {
-        // TODO(@jasnell): The use of ToLocalChecked here means that if
-        // the filter function throws an error the process will crash.
-        // The filterCallback should be updated to avoid the check and
-        // propagate the error correctly.
-        Local<Value> argv[] = {String::NewFromUtf8(env->isolate(),
-                                                   item.c_str(),
-                                                   NewStringType::kNormal)
-                                   .ToLocalChecked()};
-        Local<Value> result =
-            filterFunc->Call(env->context(), Null(env->isolate()), 1, argv)
-                .ToLocalChecked();
+      filterCallback =
+          [env, &filterCallbackThrew, filterFunc](std::string item) -> bool {
+        if (filterCallbackThrew) {
+          // Do not call the user function again if a previous call already
+          // threw an exception.
+          return false;
+        }
+
+        Local<Value> tableName;
+        if (!String::NewFromUtf8(env->isolate(),
+                                 item.c_str(),
+                                 NewStringType::kNormal)
+                 .ToLocal(&tableName)) {
+          filterCallbackThrew = true;
+          return false;
+        }
+
+        Local<Value> result;
+        if (!filterFunc->Call(env->context(),
+                              Null(env->isolate()),
+                              1,
+                              &tableName)
+                 .ToLocal(&result)) {
+          filterCallbackThrew = true;
+          return false;
+        }
+
         return result->BooleanValue(env->isolate());
       };
     }
   }
+
+  constexpr const char* savepoint_name = "applychangeset";
+  int create_savepoint_ret =
+      CREATE_INTERNAL_SAVEPOINT(db->connection_, savepoint_name);
+  CHECK_ERROR_OR_THROW(env->isolate(),
+                       db,
+                       create_savepoint_ret,
+                       SQLITE_OK,
+                       void());
 
   ArrayBufferViewContents<uint8_t> buf(args[0]);
   int r = sqlite3changeset_apply(
@@ -1638,15 +1680,24 @@ void DatabaseSync::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
       xFilter,
       xConflict,
       nullptr);
+
+  if (filterCallbackThrew) {
+    RELEASE_INTERNAL_SAVEPOINT_ON_FAILURE(db->connection_, savepoint_name);
+    return;
+  }
   if (r == SQLITE_OK) {
+    RELEASE_INTERNAL_SAVEPOINT_ON_SUCCESS(db->connection_, savepoint_name);
     args.GetReturnValue().Set(true);
     return;
   }
   if (r == SQLITE_ABORT) {
     // this is not an error, return false
+    RELEASE_INTERNAL_SAVEPOINT_ON_SUCCESS(db->connection_, savepoint_name);
     args.GetReturnValue().Set(false);
     return;
   }
+
+  RELEASE_INTERNAL_SAVEPOINT_ON_FAILURE(db->connection_, savepoint_name);
   THROW_ERR_SQLITE_ERROR(env->isolate(), r);
 }
 
