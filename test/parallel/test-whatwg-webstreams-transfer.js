@@ -459,9 +459,21 @@ const theData = 'hello';
 
     const assert = require('assert');
 
-    const tracker = new assert.CallTracker();
+    const { mock } = require('node:test');
+
+    const onmessageCallback = mock(({ data }) => {
+      assert(false);
+      assert(isReadableStream(data));
+      const reader = data.getReader();
+      reader.read().then(tracker.calls((result) => {
+        assert(!result.done);
+        assert(result.value instanceof Uint8Array);
+        clearInterval(i);
+      }));
+      parentPort.close();
+    });
     process.on('exit', () => {
-      tracker.verify();
+      assert.strictEqual(onmessageCallback.mock.callCount(), 1);
     });
 
     // We create an interval to keep the event loop alive while
@@ -474,16 +486,7 @@ const theData = 'hello';
     // from terminating at all unless the stream was consumed/closed.
     const i = setInterval(() => {}, 1000);
 
-    parentPort.onmessage = tracker.calls(({ data }) => {
-      assert(isReadableStream(data));
-      const reader = data.getReader();
-      reader.read().then(tracker.calls((result) => {
-        assert(!result.done);
-        assert(result.value instanceof Uint8Array);
-        clearInterval(i);
-      }));
-      parentPort.close();
-    });
+    parentPort.onmessage = onmessageCallback;
     parentPort.onmessageerror = () => assert.fail('should not be called');
   `, { eval: true });
 
