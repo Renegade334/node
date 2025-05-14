@@ -1212,12 +1212,11 @@ static void IsAscii(const FunctionCallbackInfo<Value>& args) {
         args[0]->IsSharedArrayBuffer());
   ArrayBufferViewContents<char> abv(args[0]);
 
-  if (abv.WasDetached()) {
-    return node::THROW_ERR_INVALID_STATE(
-        env, "Cannot validate on a detached buffer");
-  }
+  Local<Object> foo = Object::New(env->isolate());
+  Local<String> name = String::NewFromUtf8(env->isolate(), "name").ToLocalChecked();
+  foo->Set(env->context(), name, Number::New(env->isolate(), 123));
 
-  args.GetReturnValue().Set(simdutf::validate_ascii(abv.data(), abv.length()));
+  args.GetReturnValue().Set(foo);
 }
 
 void SetBufferPrototype(const FunctionCallbackInfo<Value>& args) {
