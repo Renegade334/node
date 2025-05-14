@@ -526,8 +526,17 @@ template <typename T, size_t S>
 void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
   static_assert(sizeof(T) == 1, "Only supports one-byte data at the moment");
   length_ = abv->ByteLength();
-  if (length_ > sizeof(stack_storage_) || abv->HasBuffer()) {
-    data_ = static_cast<T*>(abv->Buffer()->Data()) + abv->ByteOffset();
+  if (length_ > sizeof(stack_storage_)) {
+    data_ = static_cast<T*>(abv->Buffer()->Data() + abv->ByteOffset());
+  } else if (abv->HasBuffer()) {
+    void* buffer_data = abv->Buffer()->Data();
+    if (buffer_data == nullptr) {
+      // abv is either a zero-length view without a backing store,
+      // or a view on a detached array buffer.
+      was_detached_ = abv->Buffer()->WasDetached();
+    } else {
+      data_ = static_cast<T*>(buffer_data + abv->ByteOffset());
+    }
   } else {
     abv->CopyContents(stack_storage_, sizeof(stack_storage_));
     data_ = stack_storage_;
