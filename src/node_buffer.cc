@@ -1215,14 +1215,16 @@ static void IsAscii(const FunctionCallbackInfo<Value>& args) {
   Local<v8::Name> names[] = {
     String::NewFromUtf8(env->isolate(), "data").ToLocalChecked().As<v8::Name>(),
     String::NewFromUtf8(env->isolate(), "length").ToLocalChecked().As<v8::Name>(),
+    String::NewFromUtf8(env->isolate(), "HasBuffer").ToLocalChecked().As<v8::Name>(),
     String::NewFromUtf8(env->isolate(), "WasDetached").ToLocalChecked().As<v8::Name>()
   };
   Local<Value> values[] = {
     v8::BigInt::NewFromUnsigned(env->isolate(), reinterpret_cast<uint64_t>(abv.data())).As<Value>(),
     v8::BigInt::NewFromUnsigned(env->isolate(), reinterpret_cast<uint64_t>(abv.length())).As<Value>(),
+    v8::Boolean::New(env->isolate(), args[0].As<v8::TypedArray>()->HasBuffer()),
     v8::Boolean::New(env->isolate(), abv.WasDetached()).As<Value>()
   };
-  Local<Object> foo = Object::New(env->isolate(), v8::Null(env->isolate()), names, values, 3);
+  Local<Object> foo = Object::New(env->isolate(), v8::Null(env->isolate()), names, values, 4);
 
   args.GetReturnValue().Set(foo);
 }
