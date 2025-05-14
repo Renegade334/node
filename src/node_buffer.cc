@@ -1214,7 +1214,7 @@ static void IsAscii(const FunctionCallbackInfo<Value>& args) {
 
   Local<Object> foo = Object::New(env->isolate());
   Local<String> name = String::NewFromUtf8(env->isolate(), "name").ToLocalChecked();
-  foo->Set(env->context(), name, Number::New(env->isolate(), 123));
+  CHECK(foo->Set(env->context(), name, Number::New(env->isolate(), 123)).IsJust());
 
   args.GetReturnValue().Set(foo);
 }
