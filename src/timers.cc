@@ -53,8 +53,7 @@ void BindingData::SlowScheduleTimer(const FunctionCallbackInfo<Value>& args) {
   }
 }
 
-void BindingData::FastScheduleTimer(Local<Object> unused,
-                                    Local<Object> receiver,
+void BindingData::FastScheduleTimer(Local<Value> receiver,
                                     int64_t duration) {
   ScheduleTimerImpl(FromJSObject<BindingData>(receiver), duration);
 }
@@ -69,8 +68,7 @@ void BindingData::SlowToggleTimerRef(
                      args[0]->IsTrue());
 }
 
-void BindingData::FastToggleTimerRef(Local<Object> unused,
-                                     Local<Object> receiver,
+void BindingData::FastToggleTimerRef(Local<Value> receiver,
                                      bool ref) {
   ToggleTimerRefImpl(FromJSObject<BindingData>(receiver), ref);
 }
@@ -85,8 +83,7 @@ void BindingData::SlowToggleImmediateRef(
                          args[0]->IsTrue());
 }
 
-void BindingData::FastToggleImmediateRef(Local<Object> unused,
-                                         Local<Object> receiver,
+void BindingData::FastToggleImmediateRef(Local<Value> receiver,
                                          bool ref) {
   ToggleImmediateRefImpl(FromJSObject<BindingData>(receiver), ref);
 }
