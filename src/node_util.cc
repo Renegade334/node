@@ -10,6 +10,7 @@ namespace util {
 
 using v8::ALL_PROPERTIES;
 using v8::Array;
+using v8::ArrayBuffer;
 using v8::ArrayBufferView;
 using v8::BigInt;
 using v8::Boolean;
@@ -192,6 +193,11 @@ static void Sleep(const FunctionCallbackInfo<Value>& args) {
 void ArrayBufferViewHasBuffer(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsArrayBufferView());
   args.GetReturnValue().Set(args[0].As<ArrayBufferView>()->HasBuffer());
+}
+
+void IsResizableArrayBuffer(const FunctionCallbackInfo<Value>& args) {
+  CHECK(args[0]->IsArrayBuffer() || args[0]->IsSharedArrayBuffer());
+  args.GetReturnValue().Set(args[0].As<ArrayBuffer>()->IsResizableByUserJavaScript());
 }
 
 static uint32_t GetUVHandleTypeCode(const uv_handle_type type) {
@@ -549,6 +555,8 @@ void Initialize(Local<Object> target,
 
   SetMethod(
       context, target, "arrayBufferViewHasBuffer", ArrayBufferViewHasBuffer);
+  SetMethod(
+      context, target, "isResizableArrayBuffer", IsResizableArrayBuffer);
 
   Local<String> should_abort_on_uncaught_toggle =
       FIXED_ONE_BYTE_STRING(env->isolate(), "shouldAbortOnUncaughtToggle");
