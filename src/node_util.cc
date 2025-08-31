@@ -447,6 +447,7 @@ void RegisterExternalReferences(ExternalReferenceRegistry* registry) {
   registry->Register(GetExternalValue);
   registry->Register(Sleep);
   registry->Register(ArrayBufferViewHasBuffer);
+  registry->Register(IsResizableArrayBuffer);
   registry->Register(GuessHandleType);
   registry->Register(fast_guess_handle_type_);
   registry->Register(ParseEnv);
