@@ -200,6 +200,14 @@ void IsResizableArrayBuffer(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(args[0].As<ArrayBuffer>()->IsResizableByUserJavaScript());
 }
 
+bool FastIsResizableArrayBuffer(Local<Value> receiver,
+                                Local<Value> buffer) {
+  CHECK(buffer->IsArrayBuffer() || buffer->IsSharedArrayBuffer());
+  return buffer.As<ArrayBuffer>()->IsResizableByUserJavaScript();
+}
+
+CFunction fast_is_resizable_array_buffer_(CFunction::Make(FastIsResizableArrayBuffer));
+
 static uint32_t GetUVHandleTypeCode(const uv_handle_type type) {
   // TODO(anonrig): We can use an enum here and then create the array in the
   // binding, which will remove the hard-coding in C++ and JS land.
@@ -448,6 +456,7 @@ void RegisterExternalReferences(ExternalReferenceRegistry* registry) {
   registry->Register(Sleep);
   registry->Register(ArrayBufferViewHasBuffer);
   registry->Register(IsResizableArrayBuffer);
+  registry->Register(fast_is_resizable_array_buffer_);
   registry->Register(GuessHandleType);
   registry->Register(fast_guess_handle_type_);
   registry->Register(ParseEnv);
@@ -556,8 +565,11 @@ void Initialize(Local<Object> target,
 
   SetMethod(
       context, target, "arrayBufferViewHasBuffer", ArrayBufferViewHasBuffer);
-  SetMethod(
-      context, target, "isResizableArrayBuffer", IsResizableArrayBuffer);
+  SetFastMethodNoSideEffect(context,
+                            target,
+                            "isResizableArrayBuffer",
+                            IsResizableArrayBuffer,
+                            &fast_is_resizable_array_buffer_);
 
   Local<String> should_abort_on_uncaught_toggle =
       FIXED_ONE_BYTE_STRING(env->isolate(), "shouldAbortOnUncaughtToggle");
