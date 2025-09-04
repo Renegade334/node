@@ -3403,6 +3403,9 @@ Convert them to primitive strings.
 
 <!-- YAML
 changes:
+  - version: REPLACEME
+    pr-url: REPLACEME
+    description: Runtime deprecation.
   - version:
     - v18.7.0
     - v16.17.0
@@ -3410,7 +3413,7 @@ changes:
     description: Documentation-only deprecation.
 -->
 
-Type: Documentation-only
+Type: Runtime
 
 These methods were deprecated because they can be used in a way which does not
 hold the channel reference alive long enough to receive the events.
