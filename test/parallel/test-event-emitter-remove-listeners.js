@@ -168,3 +168,28 @@ function listener2() {}
   ee.removeListener('foo', listener1);
   assert.strictEqual(ee._events.foo, listener2);
 }
+
+{
+  const ee = {
+    __proto__: EventEmitter.prototype,
+    _events: {
+      foo: undefined,
+    },
+  };
+  EventEmitter.init.call(ee);
+
+  ee.on('foo', listener1);
+  ee.on('foo', listener2);
+
+  ee.once('removeListener', common.mustCall((name, cb) => {
+    assert.strictEqual(name, 'foo');
+    assert.strictEqual(cb, listener1);
+  }));
+  ee.removeListener('foo', listener1);
+
+  ee.once('removeListener', common.mustCall((name, cb) => {
+    assert.strictEqual(name, 'foo');
+    assert.strictEqual(cb, listener2);
+  }));
+  ee.removeListener('foo', listener2);
+}
