@@ -196,6 +196,21 @@ void ArrayBufferViewHasBuffer(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(args[0].As<ArrayBufferView>()->HasBuffer());
 }
 
+void GetArrayBufferViewBuffer(const FunctionCallbackInfo<Value>& args) {
+  CHECK(args[0]->IsArrayBufferView());
+  args.GetReturnValue().Set(args[0].As<ArrayBufferView>()->Buffer());
+}
+
+void GetArrayBufferViewByteLength(const FunctionCallbackInfo<Value>& args) {
+  CHECK(args[0]->IsArrayBufferView());
+  args.GetReturnValue().Set(args[0].As<ArrayBufferView>()->ByteLength());
+}
+
+void GetArrayBufferViewByteOffset(const FunctionCallbackInfo<Value>& args) {
+  CHECK(args[0]->IsArrayBufferView());
+  args.GetReturnValue().Set(args[0].As<ArrayBufferView>()->ByteOffset());
+}
+
 static uint32_t GetUVHandleTypeCode(const uv_handle_type type) {
   // TODO(anonrig): We can use an enum here and then create the array in the
   // binding, which will remove the hard-coding in C++ and JS land.
@@ -450,6 +465,9 @@ void RegisterExternalReferences(ExternalReferenceRegistry* registry) {
   registry->Register(GetExternalValue);
   registry->Register(Sleep);
   registry->Register(ArrayBufferViewHasBuffer);
+  registry->Register(GetArrayBufferViewBuffer);
+  registry->Register(GetArrayBufferViewByteLength);
+  registry->Register(GetArrayBufferViewByteOffset);
   registry->Register(GuessHandleType);
   registry->Register(fast_guess_handle_type_);
   registry->Register(ParseEnv);
@@ -558,6 +576,16 @@ void Initialize(Local<Object> target,
 
   SetMethod(
       context, target, "arrayBufferViewHasBuffer", ArrayBufferViewHasBuffer);
+  SetMethod(
+      context, target, "getArrayBufferViewBuffer", GetArrayBufferViewBuffer);
+  SetMethod(context,
+            target,
+            "getArrayBufferViewByteLength",
+            GetArrayBufferViewByteLength);
+  SetMethod(context,
+            target,
+            "getArrayBufferViewByteOffset",
+            GetArrayBufferViewByteOffset);
 
   Local<String> should_abort_on_uncaught_toggle =
       FIXED_ONE_BYTE_STRING(env->isolate(), "shouldAbortOnUncaughtToggle");
