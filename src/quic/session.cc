@@ -457,6 +457,7 @@ Maybe<Session::Options> Session::Options::From(Environment* env,
       !SET(application_provider) || !SET(handshake_timeout) ||
       !SET(max_stream_window) || !SET(max_window) || !SET(max_payload_size) ||
       !SET(unacknowledged_packet_threshold) || !SET(cc_algorithm)) {
+    Debug(env, DebugCategory::QUIC, "unable to set options");
     return Nothing<Options>();
   }
 

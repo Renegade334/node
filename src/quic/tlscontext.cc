@@ -597,6 +597,7 @@ Maybe<TLSContext::Options> TLSContext::Options::From(Environment* env,
       !SET(verify_private_key) || !SET(keylog) ||
       !SET_VECTOR(crypto::KeyObjectData, keys) || !SET_VECTOR(Store, certs) ||
       !SET_VECTOR(Store, ca) || !SET_VECTOR(Store, crl)) {
+    Debug(env, DebugCategory::QUIC, "unable to set TLS options");
     return Nothing<Options>();
   }
 

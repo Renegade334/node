@@ -1698,6 +1698,8 @@ JS_METHOD_IMPL(Endpoint::DoListen) {
   ASSIGN_OR_RETURN_UNWRAP(&endpoint, args.This());
   auto env = Environment::GetCurrent(args);
 
+  Debug(endpoint, "listen");
+
   Session::Options options;
   if (Session::Options::From(env, args[0]).To(&options)) {
     endpoint->Listen(options);
