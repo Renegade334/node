@@ -70,8 +70,6 @@ interface InternalBindingMap {
 
 type InternalBindingKeys = keyof InternalBindingMap;
 
-declare function internalBinding<T extends InternalBindingKeys>(binding: T): InternalBindingMap[T]
-
 declare global {
   type TypedArray =
     | Uint8Array
@@ -101,9 +99,8 @@ declare global {
     | typeof BigUint64Array
     | typeof BigInt64Array;
 
-  namespace NodeJS {
-    interface Global {
-      internalBinding<T extends InternalBindingKeys>(binding: T): InternalBindingMap[T]
-    }
-  }
+  function internalBinding<T extends InternalBindingKeys>(binding: T): InternalBindingMap[T];
+
+  // TODO: proper typing
+  var process: any;
 }

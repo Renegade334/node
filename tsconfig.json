@@ -2,6 +2,7 @@
   "include": ["lib", "doc"],
   "exclude": ["src", "tools", "out"],
   "files": [
+    "./typings/augmentations.d.ts",
     "./typings/globals.d.ts",
     "./typings/primordials.d.ts"
   ],
@@ -12,6 +13,7 @@
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "CommonJS",
+    "moduleDetection": "force",
     "baseUrl": ".",
     "paths": {
       "_http_agent": ["./lib/_http_agent.js"],
