@@ -591,9 +591,11 @@ void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
   static_assert(sizeof(T) == 1, "Only supports one-byte data at the moment");
   length_ = abv->ByteLength();
   if (length_ > sizeof(stack_storage_) || abv->HasBuffer()) {
-    auto buf_data = abv->Buffer()->Data();
-    data_ = buf_data != nullptr ? static_cast<T*>(buf_data) + abv->ByteOffset()
-                                : stack_storage_;
+    v8::Local<v8::ArrayBuffer> ab = abv->Buffer();
+    void* ab_data = ab->Data();
+    data_ = ab_data != nullptr ? static_cast<T*>(ab_data) + abv->ByteOffset()
+                               : stack_storage_;
+    was_detached_ = ab->WasDetached();
   } else {
     abv->CopyContents(stack_storage_, sizeof(stack_storage_));
     data_ = stack_storage_;
