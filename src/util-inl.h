@@ -593,8 +593,12 @@ void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
   if (length_ > sizeof(stack_storage_) || abv->HasBuffer()) {
     v8::Local<v8::ArrayBuffer> ab = abv->Buffer();
     void* ab_data = ab->Data();
-    data_ = ab_data != nullptr ? static_cast<T*>(ab_data) + abv->ByteOffset()
-                               : stack_storage_;
+    if (ab_data != nullptr) {
+      data_ = static_cast<T*>(ab_data) + abv->ByteOffset();
+    } else {
+      CHECK_EQ(length_, 0);
+      data_ = stack_storage_;
+    }
     was_detached_ = ab->WasDetached();
   } else {
     abv->CopyContents(stack_storage_, sizeof(stack_storage_));
