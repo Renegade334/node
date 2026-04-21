@@ -1,3 +1,5 @@
+import { DOMException } from 'internal/per_context/domexception';
+
 declare namespace InternalMessagingBinding {
   class MessageChannel {
     port1: MessagePort;
@@ -16,9 +18,8 @@ declare namespace InternalMessagingBinding {
   class JSTransferable {}
 }
 
-
 export interface MessagingBinding {
-  DOMException: typeof import('internal/per_context/domexception').DOMException;
+  DOMException: typeof DOMException;
   MessageChannel: typeof InternalMessagingBinding.MessageChannel;
   MessagePort: typeof InternalMessagingBinding.MessagePort;
   JSTransferable: typeof InternalMessagingBinding.JSTransferable;

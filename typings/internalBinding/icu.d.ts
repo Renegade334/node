@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+
 export interface ICUBinding {
   Converter: object;
   decode(

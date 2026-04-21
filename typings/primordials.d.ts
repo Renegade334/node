@@ -1,8 +1,8 @@
-type UncurryThis<T extends (this: unknown, ...args: unknown[]) => unknown> =
+type UncurryThis<T extends (this: unknown, ...args: any[]) => any> =
   (self: ThisParameterType<T>, ...args: Parameters<T>) => ReturnType<T>;
-type UncurryThisStaticApply<T extends (this: unknown, ...args: unknown[]) => unknown> =
+type UncurryThisStaticApply<T extends (this: unknown, ...args: any[]) => any> =
   (self: ThisParameterType<T>, args: Parameters<T>) => ReturnType<T>;
-type StaticApply<T extends (this: unknown, ...args: unknown[]) => unknown> =
+type StaticApply<T extends (this: unknown, ...args: any[]) => any> =
   (args: Parameters<T>) => ReturnType<T>;
 
 type UncurryMethod<O, K extends keyof O, T = O> =
