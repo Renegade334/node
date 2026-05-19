@@ -75,14 +75,14 @@ const {
 
   // Run this one twice to make sure that the dh3 clears its error properly
   {
-    const c = crypto.createDecipheriv('aes-128-ecb', crypto.randomBytes(16), '');
+    const c = crypto.createDecipheriv('aes-128-ecb', crypto.randomBytesSync(16), '');
     assert.throws(() => {
       c.final('utf8');
     }, wrongBlockLength);
   }
 
   {
-    const c = crypto.createDecipheriv('aes-128-ecb', crypto.randomBytes(16), '');
+    const c = crypto.createDecipheriv('aes-128-ecb', crypto.randomBytesSync(16), '');
     assert.throws(() => {
       c.final('utf8');
     }, wrongBlockLength);

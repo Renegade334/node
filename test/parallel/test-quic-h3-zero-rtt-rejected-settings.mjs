@@ -21,7 +21,7 @@ if (!hasQuic) {
 }
 
 const { listen, connect } = await import('node:quic');
-const { createPrivateKey, randomBytes } = await import('node:crypto');
+const { createPrivateKey, randomBytesSync } = await import('node:crypto');
 const { bytes } = await import('stream/iter');
 
 const key = createPrivateKey(readKey('agent1-key.pem'));
@@ -132,7 +132,7 @@ async function attemptRejected0RTT(endpointOptions, ticket, token) {
   ep.close();
 }
 
-const tokenSecret = randomBytes(16);
+const tokenSecret = randomBytesSync(16);
 
 // enable_connect_protocol disabled.
 {

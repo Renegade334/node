@@ -72,7 +72,7 @@ async function testVerify({ name,
   assert(await subtle.verify({ name, context }, publicKey, signature, data));
   if (context?.byteLength !== undefined) {
     if (supportsContext) {
-      assert(!(await subtle.verify({ name, context: crypto.randomBytes(30) }, publicKey, signature, data)));
+      assert(!(await subtle.verify({ name, context: crypto.randomBytesSync(30) }, publicKey, signature, data)));
     }
     if (context.byteLength === 0) {
       assert(await subtle.verify({ name }, publicKey, signature, data));
@@ -202,7 +202,7 @@ async function testSign({ name,
     assert(await subtle.verify({ name, context }, publicKey, sig, data));
     if (context?.byteLength !== undefined) {
       if (supportsContext) {
-        assert(!(await subtle.verify({ name, context: crypto.randomBytes(30) }, publicKey, signature, data)));
+        assert(!(await subtle.verify({ name, context: crypto.randomBytesSync(30) }, publicKey, signature, data)));
       }
       if (context.byteLength === 0) {
         assert(await subtle.verify({ name }, publicKey, signature, data));
@@ -267,13 +267,13 @@ async function testSign({ name,
 if (!supportsContext) {
   assert.rejects(async () => {
     const kp = await subtle.generateKey('Ed448', false, ['sign', 'verify']);
-    const data = crypto.randomBytes(32);
+    const data = crypto.randomBytesSync(32);
     await subtle.sign({ name: 'Ed448', context: new Uint8Array(32) }, kp.privateKey, data);
   }, { name: /OperationError|NotSupportedError/ }).then(common.mustCall());
 
   assert.rejects(async () => {
     const kp = await subtle.generateKey('Ed448', false, ['sign', 'verify']);
-    const data = crypto.randomBytes(32);
+    const data = crypto.randomBytesSync(32);
     await subtle.verify({ name: 'Ed448', context: new Uint8Array(32) }, kp.publicKey, data, data);
   }, { name: /OperationError|NotSupportedError/ }).then(common.mustCall());
 }

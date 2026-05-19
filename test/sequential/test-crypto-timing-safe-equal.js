@@ -21,7 +21,7 @@ assert.strictEqual(
 
 {
   // Test TypedArrays with different lengths but equal byteLengths.
-  const buf = crypto.randomBytes(16).buffer;
+  const buf = crypto.randomBytesSync(16).buffer;
   const a1 = new Uint8Array(buf);
   const a2 = new Uint16Array(buf);
   const a3 = new Uint32Array(buf);

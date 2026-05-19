@@ -786,8 +786,8 @@ if (!process.features.openssl_is_boringssl) {
 
 // Refs: https://github.com/nodejs/node/issues/62342
 if (ciphers.includes('aes-128-ccm')) {
-  const key = crypto.randomBytes(16);
-  const nonce = crypto.randomBytes(13);
+  const key = crypto.randomBytesSync(16);
+  const nonce = crypto.randomBytesSync(13);
 
   const cipher = crypto.createCipheriv('aes-128-ccm', key, nonce, {
     authTagLength: 16,

@@ -206,7 +206,7 @@ if (hasOpenSSL(3)) {
 
 // HKDF: Invalid digest (AdditionalConfig error - should throw in both paths)
 {
-  const key = crypto.randomBytes(32);
+  const key = crypto.randomBytesSync(32);
   const salt = Buffer.alloc(0);
   const info = Buffer.alloc(0);
 
@@ -222,7 +222,7 @@ if (hasOpenSSL(3)) {
 
 // HKDF: keylen too large (AdditionalConfig error)
 {
-  const key = crypto.randomBytes(32);
+  const key = crypto.randomBytesSync(32);
   const salt = Buffer.alloc(0);
   const info = Buffer.alloc(0);
   // sha256 output is 32 bytes, max HKDF output is 255 * 32 = 8160

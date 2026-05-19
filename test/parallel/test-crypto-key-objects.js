@@ -14,7 +14,7 @@ const {
   createPublicKey,
   createPrivateKey,
   KeyObject,
-  randomBytes,
+  randomBytesSync,
   publicDecrypt,
   publicEncrypt,
   privateDecrypt,
@@ -68,7 +68,7 @@ const privateDsa = fixtures.readKey('dsa_private_encrypted_1025.pem',
 }
 
 {
-  const keybuf = randomBytes(32);
+  const keybuf = randomBytesSync(32);
   const key = createSecretKey(keybuf);
   assert.strictEqual(key.type, 'secret');
   assert.strictEqual(key.toString(), '[object KeyObject]');

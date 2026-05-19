@@ -11,7 +11,7 @@ if (!hasOpenSSL(3, 5) && !process.features.openssl_is_boringssl)
 
 const assert = require('assert');
 const {
-  randomBytes,
+  randomBytesSync,
   sign,
   verify,
   createPublicKey,
@@ -43,12 +43,13 @@ for (const [asymmetricKeyType, sigLen] of [
       common.printSkipMessage('Skipping unsupported private key format test');
       continue;
     }
-    for (const data of [randomBytes(0), randomBytes(1), randomBytes(32), randomBytes(128), randomBytes(1024)]) {
+    for (const size of [0, 1, 32, 128, 1024]) {
+      const data = randomBytesSync(size);
       // sync
       {
         const signature = sign(undefined, data, privateKey);
         assert.strictEqual(signature.byteLength, sigLen);
-        assert.strictEqual(verify(undefined, randomBytes(32), keys.public, signature), false);
+        assert.strictEqual(verify(undefined, randomBytesSync(32), keys.public, signature), false);
         assert.strictEqual(verify(undefined, data, keys.public, Buffer.alloc(sigLen)), false);
         assert.strictEqual(verify(undefined, data, keys.public, signature), true);
         assert.strictEqual(verify(undefined, data, privateKey, signature), true);
@@ -95,7 +96,7 @@ for (const [asymmetricKeyType, sigLen] of [
       asymmetricKeyType,
     };
 
-    const data = randomBytes(32);
+    const data = randomBytesSync(32);
     const signature = sign(undefined, data, rawSeed);
     assert.strictEqual(signature.byteLength, sigLen);
     assert.strictEqual(verify(undefined, data, rawPublic, signature), true);

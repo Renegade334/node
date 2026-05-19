@@ -91,7 +91,7 @@ assert.throws(() => {
 
 // eslint-disable-next-line node-core/crypto-check
 const random10 = common.hasCrypto ?
-  require('crypto').randomBytes(10) :
+  require('crypto').randomBytesSync(10) :
   Buffer.alloc(10, 1);
 const derived18 = Buffer.alloc(18);
 for (let i = 0, j = 0; i < 18; i++) {

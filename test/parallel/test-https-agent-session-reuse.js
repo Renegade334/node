@@ -30,7 +30,7 @@ const agent = new https.Agent({
 
 const server = https.createServer(options, function(req, res) {
   if (req.url === '/drop-key')
-    server.setTicketKeys(crypto.randomBytes(48));
+    server.setTicketKeys(crypto.randomBytesSync(48));
 
   serverRequests++;
   res.end('ok');

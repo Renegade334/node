@@ -6,26 +6,26 @@ if (!common.hasCrypto)
   common.skip('missing crypto');
 
 const assert = require('assert');
-const { createDecipheriv, randomBytes } = require('crypto');
+const { createDecipheriv, randomBytesSync } = require('crypto');
 
 common.expectWarning({
   DeprecationWarning: []
 });
 
-const key = randomBytes(32);
-const iv = randomBytes(16);
+const key = randomBytesSync(32);
+const iv = randomBytesSync(16);
 
 {
   // Full 128-bit tag.
 
-  const tag = randomBytes(16);
+  const tag = randomBytesSync(16);
   createDecipheriv('aes-256-gcm', key, iv).setAuthTag(tag);
 }
 
 {
   // Shortened tag with explicit length option.
 
-  const tag = randomBytes(12);
+  const tag = randomBytesSync(12);
   createDecipheriv('aes-256-gcm', key, iv, {
     authTagLength: tag.byteLength
   }).setAuthTag(tag);
@@ -34,7 +34,7 @@ const iv = randomBytes(16);
 {
   // Shortened tag with explicit but incorrect length option.
 
-  const tag = randomBytes(12);
+  const tag = randomBytesSync(12);
   assert.throws(() => {
     createDecipheriv('aes-256-gcm', key, iv, {
       authTagLength: 14

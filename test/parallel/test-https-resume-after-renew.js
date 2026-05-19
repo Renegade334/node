@@ -24,7 +24,7 @@ server._sharedCreds.context.enableTicketKeyCallback();
 server._sharedCreds.context.onticketkeycallback = function(name, iv, enc) {
   if (enc) {
     const newName = Buffer.alloc(16, 'A');
-    const newIV = crypto.randomBytes(16);
+    const newIV = crypto.randomBytesSync(16);
     return [ 1, hmac, aes, newName, newIV ];
   }
   // Renew

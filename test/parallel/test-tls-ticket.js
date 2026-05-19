@@ -36,7 +36,7 @@ if (process.features.openssl_is_boringssl &&
   return;
 }
 
-const keys = crypto.randomBytes(48);
+const keys = crypto.randomBytesSync(48);
 const serverLog = [];
 const ticketLog = [];
 
@@ -83,7 +83,7 @@ function createServer() {
     if (counter === 1) {
       previousKey = server.getTicketKeys();
       assert.strictEqual(previousKey.compare(keys), 0);
-      setTicketKeys(crypto.randomBytes(48));
+      setTicketKeys(crypto.randomBytesSync(48));
     } else if (counter === 2) {
       setTicketKeys(previousKey);
     } else if (counter === 3) {

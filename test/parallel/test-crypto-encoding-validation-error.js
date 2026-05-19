@@ -6,10 +6,10 @@ if (!common.hasCrypto)
 // This test checks if error is thrown in case of wrong encoding provided into cipher.
 
 const assert = require('assert');
-const { createCipheriv, randomBytes } = require('crypto');
+const { createCipheriv, randomBytesSync } = require('crypto');
 
 const createCipher = () => {
-  return createCipheriv('aes-256-cbc', randomBytes(32), randomBytes(16));
+  return createCipheriv('aes-256-cbc', randomBytesSync(32), randomBytesSync(16));
 };
 
 {

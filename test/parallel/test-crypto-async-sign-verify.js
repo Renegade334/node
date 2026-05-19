@@ -152,8 +152,8 @@ if (!process.features.openssl_is_boringssl) {
   const untrustedKey = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VuAyEA6pwGRbadNQAI/tYN8+/p/0/hbsdHfOEGr1ADiLVk/Gc=
 -----END PUBLIC KEY-----`;
-  const data = crypto.randomBytes(32);
-  const signature = crypto.randomBytes(16);
+  const data = crypto.randomBytesSync(32);
+  const signature = crypto.randomBytesSync(16);
 
   let expected = /no default digest/;
   let expectedCode = 'ERR_OSSL_EVP_NO_DEFAULT_DIGEST';

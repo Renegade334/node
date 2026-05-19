@@ -10,7 +10,7 @@ const assert = require('assert');
 const {
   createSecretKey,
   KeyObject,
-  randomBytes,
+  randomBytesSync,
   generateKeyPairSync,
 } = require('crypto');
 
@@ -25,7 +25,7 @@ function assertCryptoKey(cryptoKey, keyObject, algorithm, extractable, usages) {
 
 {
   for (const length of [128, 192, 256]) {
-    const key = createSecretKey(randomBytes(length >> 3));
+    const key = createSecretKey(randomBytesSync(length >> 3));
     const algorithms = ['AES-CTR', 'AES-CBC', 'AES-GCM', 'AES-KW'];
     if (length === 256)
       algorithms.push('ChaCha20-Poly1305');
@@ -42,7 +42,7 @@ function assertCryptoKey(cryptoKey, keyObject, algorithm, extractable, usages) {
 }
 
 {
-  const pbkdf2 = createSecretKey(randomBytes(16));
+  const pbkdf2 = createSecretKey(randomBytesSync(16));
   const algorithm = 'PBKDF2';
   const usages = ['deriveBits'];
   assert.throws(() => pbkdf2.toCryptoKey(algorithm, true, usages), {
@@ -60,7 +60,7 @@ function assertCryptoKey(cryptoKey, keyObject, algorithm, extractable, usages) {
 
 {
   for (const length of [128, 192, 256]) {
-    const hmac = createSecretKey(randomBytes(length >> 3));
+    const hmac = createSecretKey(randomBytesSync(length >> 3));
     const algorithm = 'HMAC';
     const usages = ['sign', 'verify'];
 
@@ -217,7 +217,7 @@ if (hasOpenSSL(3, 5) || process.features.openssl_is_boringssl) {
 
 if (hasOpenSSL(3)) {
   for (const algorithm of ['KMAC128', 'KMAC256']) {
-    const hmac = createSecretKey(randomBytes(32));
+    const hmac = createSecretKey(randomBytesSync(32));
     const usages = ['sign', 'verify'];
 
     assert.throws(() => {

@@ -4574,6 +4574,20 @@ throwing an error. This behavior is inconsistent with `hash.digest()` and
 may lead to subtle bugs. Calling `hmac.digest()` on a finalized `Hmac` instance
 will throw an error in a future version.
 
+### DEP0207: Calling `crypto.randomBytes()` without a callback parameter
+
+<!-- YAML
+changes:
+  - version: REPLACEME
+    pr-url: REPLACEME
+    description: Documentation-only deprecation.
+-->
+
+Type: Documentation-only
+
+Calling [`crypto.randomBytes()`][] without a callback parameter is deprecated.
+For the synchronous equivalent, use [`crypto.randomBytesSync()`][].
+
 [DEP0142]: #dep0142-repl_builtinlibs
 [NIST SP 800-38D]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
 [RFC 6066]: https://tools.ietf.org/html/rfc6066#section-3
@@ -4631,6 +4645,7 @@ will throw an error in a future version.
 [`crypto.publicDecrypt()`]: crypto.md#cryptopublicdecryptkey-buffer
 [`crypto.publicEncrypt()`]: crypto.md#cryptopublicencryptkey-buffer
 [`crypto.randomBytes()`]: crypto.md#cryptorandombytessize-callback
+[`crypto.randomBytesSync()`]: crypto.md#cryptorandombytessyncsize
 [`crypto.scrypt()`]: crypto.md#cryptoscryptpassword-salt-keylen-options-callback
 [`crypto.setEngine()`]: crypto.md#cryptosetengineengine-flags
 [`crypto.sign()`]: crypto.md#cryptosignalgorithm-data-key-callback

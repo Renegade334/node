@@ -521,7 +521,8 @@ for (const pair of [
       const sig = crypto.sign(algo, data, { key: pair.private, context });
       assert.strictEqual(crypto.verify(algo, data, { key: pair.public }, sig), true);
       assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context }, sig), true);
-      assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context: crypto.randomBytes(30) }, sig), false);
+      assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context: crypto.randomBytesSync(30) }, sig),
+                         false);
     }
 
     {
@@ -529,7 +530,8 @@ for (const pair of [
       const sig = crypto.sign(algo, data, { key: pair.private, context });
       assert.strictEqual(crypto.verify(algo, data, { key: pair.public }, sig), false);
       assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context }, sig), true);
-      assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context: crypto.randomBytes(30) }, sig), false);
+      assert.strictEqual(crypto.verify(algo, data, { key: pair.public, context: crypto.randomBytesSync(30) }, sig),
+                         false);
     }
 
     assert.throws(() => crypto.sign(algo, data, { key: pair.private, context: new Uint8Array(256) }), {
@@ -558,7 +560,10 @@ for (const pair of [
         crypto.sign(algo, data, { key: pair.private, context });
       }, { message: 'Context parameter is unsupported' });
       assert.throws(() => {
-        crypto.verify(algo, data, { key: pair.public, context: crypto.randomBytes(30) }, crypto.randomBytes(32));
+        crypto.verify(algo,
+                      data,
+                      { key: pair.public, context: crypto.randomBytesSync(30) },
+                      crypto.randomBytesSync(32));
       }, { message: 'Context parameter is unsupported' });
     }
   }
@@ -662,7 +667,7 @@ if (hasOpenSSL(3, 2)) {
 
     // Test invalid signature lengths.
     for (const i of [-2, -1, 1, 2, 4, 8]) {
-      sig = crypto.randomBytes(length + i);
+      sig = crypto.randomBytesSync(length + i);
       let result;
       try {
         result = crypto.verify('sha1', data, opts, sig);

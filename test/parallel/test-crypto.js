@@ -125,8 +125,8 @@ for (const algo of cryptoCiphers) {
   else if (mode === 'ocb' || algo === 'chacha20-poly1305')
     options = { authTagLength: 16 };
   crypto.createCipheriv(algo,
-                        crypto.randomBytes(keyLength),
-                        crypto.randomBytes(ivLength || 0),
+                        crypto.randomBytesSync(keyLength),
+                        crypto.randomBytesSync(ivLength || 0),
                         options);
 }
 
@@ -280,7 +280,7 @@ if (!hasOpenSSL3) {
 }
 
 // Make sure memory isn't released before being returned
-console.log(crypto.randomBytes(16));
+console.log(crypto.randomBytesSync(16));
 
 assert.throws(() => {
   tls.createSecureContext({ crl: 'not a CRL' });

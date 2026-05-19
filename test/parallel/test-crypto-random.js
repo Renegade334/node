@@ -71,6 +71,34 @@ common.expectWarning('DeprecationWarning',
 }
 
 {
+  [undefined, null, false, true, {}, []].forEach((value) => {
+    const errObj = {
+      code: 'ERR_INVALID_ARG_TYPE',
+      name: 'TypeError',
+      message: 'The "size" argument must be of type number.' +
+                common.invalidArgTypeHelper(value)
+    };
+    assert.throws(() => crypto.randomBytesSync(value), errObj);
+  });
+
+  [-1, NaN, 2 ** 32, 2 ** 31].forEach((value) => {
+    const errObj = {
+      code: 'ERR_OUT_OF_RANGE',
+      name: 'RangeError',
+      message: 'The value of "size" is out of range. It must be >= 0 && <= ' +
+                `${kMaxPossibleLength}. Received ${value}`
+    };
+    assert.throws(() => crypto.randomBytesSync(value), errObj);
+  });
+
+  [0, 1, 2, 4, 16, 256, 1024, 101.2].forEach((len) => {
+    const buf = crypto.randomBytesSync(len);
+    assert.strictEqual(buf.length, Math.floor(len));
+    assert.ok(Buffer.isBuffer(buf));
+  });
+}
+
+{
   const buf = Buffer.alloc(10);
   const before = buf.toString('hex');
   const after = crypto.randomFillSync(buf).toString('hex');
@@ -290,7 +318,16 @@ common.expectWarning('DeprecationWarning',
 // "FATAL ERROR: v8::Object::SetIndexedPropertiesToExternalArrayData() length
 // exceeds max acceptable value"
 assert.throws(
-  () => crypto.randomBytes((-1 >>> 0) + 1),
+  () => crypto.randomBytes((-1 >>> 0) + 1, () => {}),
+  {
+    code: 'ERR_OUT_OF_RANGE',
+    name: 'RangeError',
+    message: 'The value of "size" is out of range. ' +
+             `It must be >= 0 && <= ${kMaxPossibleLength}. Received 4294967296`
+  }
+);
+assert.throws(
+  () => crypto.randomBytesSync((-1 >>> 0) + 1),
   {
     code: 'ERR_OUT_OF_RANGE',
     name: 'RangeError',

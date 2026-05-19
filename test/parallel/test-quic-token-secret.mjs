@@ -17,14 +17,14 @@ if (!hasQuic) {
 }
 
 const { listen, connect } = await import('node:quic');
-const { createPrivateKey, randomBytes } = await import('node:crypto');
+const { createPrivateKey, randomBytesSync } = await import('node:crypto');
 
 const key = createPrivateKey(readKey('agent1-key.pem'));
 const cert = readKey('agent1-cert.pem');
 const sni = { '*': { keys: [key], certs: [cert] } };
 const alpn = ['quic-test'];
 
-const sharedSecret = randomBytes(16);
+const sharedSecret = randomBytesSync(16);
 
 let savedToken;
 const gotToken = Promise.withResolvers();
@@ -77,7 +77,7 @@ const ep3 = await listen(async (serverSession) => {
 }, {
   sni,
   alpn,
-  endpoint: { tokenSecret: randomBytes(16) },
+  endpoint: { tokenSecret: randomBytesSync(16) },
 });
 
 const cs3 = await connect(ep3.address, {

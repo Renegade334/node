@@ -16,10 +16,10 @@ class TestTLSSocket extends net.Socket {
     // AES128-GCM-SHA256
     this.ciphers = Buffer.from('000002009c0', 'hex');
     this.pre_primary_secret =
-      Buffer.concat([this.version, crypto.randomBytes(46)]);
+      Buffer.concat([this.version, crypto.randomBytesSync(46)]);
     this.primary_secret = null;
     this.write_seq = 0;
-    this.client_random = crypto.randomBytes(32);
+    this.client_random = crypto.randomBytesSync(32);
 
     this.on('handshake', (msg) => {
       this.handshake_list.push(msg);
@@ -115,7 +115,7 @@ class TestTLSSocket extends net.Socket {
   encrypt(plain) {
     const type = plain.slice(0, 1);
     const version = plain.slice(1, 3);
-    const nonce = crypto.randomBytes(8);
+    const nonce = crypto.randomBytesSync(8);
     const iv = Buffer.concat([this.client_writeIV.slice(0, 4), nonce]);
     const bob = crypto.createCipheriv('aes-128-gcm', this.client_writeKey, iv);
     const write_seq = Buffer.alloc(8);

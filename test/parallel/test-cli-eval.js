@@ -320,12 +320,12 @@ child.exec(
 if (common.hasCrypto) {
   // Assert that calls to crypto utils work without require.
   child.exec(
-    ...common.escapePOSIXShell`"${process.execPath}" -e "console.log(crypto.randomBytes(16).toString('hex'))"`,
+    ...common.escapePOSIXShell`"${process.execPath}" -e "console.log(crypto.randomBytesSync(16).toString('hex'))"`,
     common.mustSucceed((stdout) => {
       assert.match(stdout, /[0-9a-f]{32}/i);
     }));
   child.exec(
-    ...common.escapePOSIXShell`"${process.execPath}" -p "crypto.randomBytes(16).toString('hex')"`,
+    ...common.escapePOSIXShell`"${process.execPath}" -p "crypto.randomBytesSync(16).toString('hex')"`,
     common.mustSucceed((stdout) => {
       assert.match(stdout, /[0-9a-f]{32}/i);
     }));

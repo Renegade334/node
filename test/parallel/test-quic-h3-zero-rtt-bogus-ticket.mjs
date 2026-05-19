@@ -17,7 +17,7 @@ if (!hasQuic) {
 }
 
 const { listen, connect } = await import('node:quic');
-const { createPrivateKey, randomBytes } = await import('node:crypto');
+const { createPrivateKey, randomBytesSync } = await import('node:crypto');
 
 const key = createPrivateKey(readKey('agent1-key.pem'));
 const cert = readKey('agent1-cert.pem');
@@ -30,7 +30,7 @@ const serverEndpoint = await listen(mustNotCall(), {
 await rejects(
   connect(serverEndpoint.address, {
     servername: 'localhost',
-    sessionTicket: randomBytes(256),
+    sessionTicket: randomBytesSync(256),
   }),
   { code: 'ERR_INVALID_ARG_VALUE' },
 );

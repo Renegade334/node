@@ -4,12 +4,12 @@ if (!common.hasCrypto)
   common.skip('missing crypto');
 
 const assert = require('assert');
-const { createDecipheriv, randomBytes } = require('crypto');
+const { createDecipheriv, randomBytesSync } = require('crypto');
 
-const key = randomBytes(32);
-const iv = randomBytes(16);
+const key = randomBytesSync(32);
+const iv = randomBytesSync(16);
 for (let tagLength = 0; tagLength < 16; tagLength++) {
-  const tag = randomBytes(tagLength);
+  const tag = randomBytesSync(tagLength);
   assert.throws(() => {
     createDecipheriv('aes-256-gcm', key, iv).setAuthTag(tag);
   }, {

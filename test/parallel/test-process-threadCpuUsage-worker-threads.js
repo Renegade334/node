@@ -15,14 +15,14 @@ if (isSunOS) {
 }
 
 const assert = require('assert');
-const { randomBytes, createHash } = require('crypto');
+const { randomBytesSync, createHash } = require('crypto');
 const { once } = require('events');
 const { Worker, parentPort, workerData } = require('worker_threads');
 
 const FREQUENCIES = [100, 500, 1000];
 
 function performLoad() {
-  const buffer = randomBytes(1e8);
+  const buffer = randomBytesSync(1e8);
 
   // Do some work
   return setInterval(() => {

@@ -11,7 +11,7 @@ const fixtures = require('../common/fixtures');
 const privateKey = crypto.createPrivateKey(fixtures.readKey('rsa_private.pem', 'ascii'));
 const publicKey = crypto.createPublicKey(fixtures.readKey('rsa_public.pem', 'ascii'));
 
-const data = crypto.randomBytes(32);
+const data = crypto.randomBytesSync(32);
 
 for (const digest of ['sha256', 'sha384', 'sha512']) {
   const hLen = crypto.hash(digest, data, 'buffer').byteLength;

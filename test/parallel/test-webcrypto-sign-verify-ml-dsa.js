@@ -59,7 +59,7 @@ async function testVerify({ name,
   ]);
 
   assert(await subtle.verify({ name, context }, publicKey, signature, data));
-  assert(!(await subtle.verify({ name, context: crypto.randomBytes(30) }, publicKey, signature, data)));
+  assert(!(await subtle.verify({ name, context: crypto.randomBytesSync(30) }, publicKey, signature, data)));
   if (context.byteLength === 0) {
     assert(await subtle.verify({ name }, publicKey, signature, data));
   }

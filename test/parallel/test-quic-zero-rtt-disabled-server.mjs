@@ -18,7 +18,7 @@ if (!hasQuic) {
 }
 
 const { listen, connect } = await import('node:quic');
-const { createPrivateKey, randomBytes } = await import('node:crypto');
+const { createPrivateKey, randomBytesSync } = await import('node:crypto');
 
 const key = createPrivateKey(readKey('agent1-key.pem'));
 const cert = readKey('agent1-cert.pem');
@@ -26,7 +26,7 @@ const sni = { '*': { keys: [key], certs: [cert] } };
 const alpn = ['quic-test'];
 
 // Use the same tokenSecret for both servers so the token is valid.
-const tokenSecret = randomBytes(16);
+const tokenSecret = randomBytesSync(16);
 
 let savedTicket;
 let savedToken;

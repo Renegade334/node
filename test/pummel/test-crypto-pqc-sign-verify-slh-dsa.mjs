@@ -10,7 +10,7 @@ if (!hasOpenSSL(3, 5))
 
 import * as assert from 'node:assert';
 import { promisify } from 'node:util';
-import { randomBytes, sign, verify } from 'node:crypto';
+import { randomBytesSync, sign, verify } from 'node:crypto';
 import fixtures from '../common/fixtures.js';
 
 function getKeyFileName(type, suffix) {
@@ -36,13 +36,13 @@ for (const [asymmetricKeyType, sigLen] of [
     private: fixtures.readKey(getKeyFileName(asymmetricKeyType, 'private'), 'ascii'),
   };
 
-  const data = randomBytes(32);
+  const data = randomBytesSync(32);
 
   // sync
   {
     const signature = sign(undefined, data, keys.private);
     assert.strictEqual(signature.byteLength, sigLen);
-    assert.strictEqual(verify(undefined, randomBytes(32), keys.public, signature), false);
+    assert.strictEqual(verify(undefined, randomBytesSync(32), keys.public, signature), false);
     assert.strictEqual(verify(undefined, data, keys.public, signature), true);
   }
 
@@ -52,7 +52,7 @@ for (const [asymmetricKeyType, sigLen] of [
     const pVerify = promisify(verify);
     const signature = await pSign(undefined, data, keys.private);
     assert.strictEqual(signature.byteLength, sigLen);
-    assert.strictEqual(await pVerify(undefined, randomBytes(32), keys.public, signature), false);
+    assert.strictEqual(await pVerify(undefined, randomBytesSync(32), keys.public, signature), false);
     assert.strictEqual(await pVerify(undefined, data, keys.public, signature), true);
   }
 
