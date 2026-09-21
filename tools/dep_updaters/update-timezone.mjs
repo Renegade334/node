@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execSync } from 'node:child_process';
-import { renameSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, renameSync, readdirSync, rmSync } from 'node:fs';
 
 const fileNames = [
   'zoneinfo64.res',
@@ -15,6 +15,9 @@ const availableVersions = readdirSync('icu-data/tzdata/icunew', { withFileTypes:
 .map((dirent) => dirent.name);
 
 const latestVersion = availableVersions.sort().at(-1);
+
+// For V8's make_temporal_zoneinfo_cpp
+cpSync(`icu-data/tzdata/icunew/${latestVersion}/44/le/zoneinfo64.res`, 'tools/icu/zoneinfo64.res');
 
 execSync('bzip2 -d deps/icu-small/source/data/in/icudt*.dat.bz2');
 fileNames.forEach((file) => {

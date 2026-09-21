@@ -16,6 +16,8 @@ Both V8 and Node.js use ICU to provide internationalization functionality.
   as part of repackaging. Not used separately. See source for more details.
 * `no-op.cc` contains an empty function to convince gyp to use a C++ compiler.
 * `shrink-icu-src.py` is used during upgrade (see guide below).
+* `zoneinfo64.res` is a standalone copy of the compiled timezone data, which is
+  vendored into V8 if building with Temporal support and without ICU.
 
 Note:
 
