@@ -623,7 +623,7 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> buf);
 
-  inline const T* Data() const { return reinterpret_cast<T*>(data_); }
+  inline const T* Data() const { return static_cast<T*>(data_); }
   inline const T* data() const { return Data(); } ///////////////////////////
   inline size_t Length() const { return length_; }
   inline size_t length()  const { return Length(); } ////////////////////////
@@ -647,7 +647,7 @@ class ArrayBufferViewContents {
   inline void SetFlags(const v8::ArrayBuffer* buffer);
 
   uint8_t stack_storage_[kMaxSizeInHeap];
-  uint8_t* data_ = nullptr;
+  void* data_ = nullptr;
   size_t length_ = 0;
   bool is_immutable_ = false;
   bool is_resizable_by_user_js_ = false;
