@@ -646,7 +646,7 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
     data_ = sab->Data();
     length_ = sab->ByteLength();
     is_resizable_by_user_js_ =
-        static_cast<v8::ArrayBuffer*>(*sab)->IsResizableByUserJavaScript();
+        static_cast<v8::ArrayBuffer*>(*value)->IsResizableByUserJavaScript();
     is_shared_ = true;
   } else {
     UNREACHABLE();
