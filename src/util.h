@@ -653,14 +653,23 @@ class ArrayBufferViewContents {
   bool was_detached_ = false;
 };
 
+// Most of the V8 API's array buffer utility methods are only available on the
+// ArrayBuffer class, not the SharedArrayBuffer class.
+// ArrayBuffers and SharedArrayBuffers are both JSArrayBuffer handles in V8, and
+// the API occasionally treats them as equivalent.
+// However, casting directly from one to the other triggers an assertion if
+// V8_ENABLE_CHECKS is enabled, as the cast checks the value of the JSArrayBuffer's
+// is_shared flag.
+// To get around this, we can use a thin wrapper around the handle pointer, which
+// is valid for the lifetime of the Local that it's constructed from.
 struct ArrayBufferHandle {
  public:
-  ArrayBufferHandle(v8::Local<v8::Value> value) {
+  inline ArrayBufferHandle(v8::Local<v8::Value> value) {
     DCHECK(value->IsArrayBuffer() || value->IsSharedArrayBuffer());
     handle_ = static_cast<v8::ArrayBuffer*>(*value);
   }
-  v8::ArrayBuffer* operator->() const { return handle_; }
-  v8::ArrayBuffer* operator*() const { return handle_; }
+  inline v8::ArrayBuffer* operator->() const { return handle_; }
+  inline v8::ArrayBuffer* operator*() const { return handle_; }
 
  private:
   v8::ArrayBuffer* handle_;

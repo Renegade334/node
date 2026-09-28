@@ -614,8 +614,8 @@ template <typename T>
   requires(sizeof(T) == 1)
 void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   std::span<uint8_t> memory = abv->GetContents(
-      {static_cast<uint8_t*>(stack_storage_), sizeof(stack_storage_)});
-  data_ = static_cast<T*>(memory.data());
+      {reinterpret_cast<uint8_t*>(stack_storage_), sizeof(stack_storage_)});
+  data_ = reinterpret_cast<T*>(memory.data());
   length_ = memory.size();
   if (abv->HasBuffer()) {
     SetFlags(*abv->Buffer());
