@@ -605,9 +605,10 @@ class MaybeStackBuffer<T, kStackStorageSize> {
   std::optional<v8::LocalVector<T>> local_vector_;
 };
 
-// Provides access to an ArrayBufferView's storage, either the original,
-// or for small data, a copy of it. This object's lifetime is bound to the
-// original ArrayBufferView's lifetime.
+// Provides read-only access to an ArrayBuffer or ArrayBufferView's storage.
+// If the source is a TypedArray with on-heap storage, copies the contents
+// onto the stack rather than forcing the creation of an ArrayBuffer handle.
+// This object's lifetime is bound to the original buffer's lifetime.
 template <typename T, size_t kStackStorageSize = 64>
   requires(sizeof(T) == 1)
 class ArrayBufferViewContents {

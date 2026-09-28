@@ -599,6 +599,7 @@ template <typename T, size_t S>
   requires(sizeof(T) == 1)
 ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
     v8::Local<v8::Object> value) {
+  static_assert(false);
   CHECK(value->IsArrayBufferView());
   Read(value.As<v8::ArrayBufferView>());
 }
