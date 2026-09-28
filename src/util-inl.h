@@ -647,12 +647,13 @@ template <typename T>
   requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::Value> buffer) {
   is_shared_ = buffer->IsSharedArrayBuffer();
-  // Implicit cast of SharedArrayBuffer* to ArrayBuffer* so that
-  // we can access these utility methods.
-  // This cast is valid, as both classes wrap a JSArrayBuffer handle,
-  // but the equivalent V8 cast will fail if V8_ENABLE_CHECKS is
-  // enabled, since it checks the underlying handle's is_shared flag.
-  const v8::ArrayBuffer* handle = *buffer;
+  // Implicit cast of SharedArrayBuffer to ArrayBuffer so that we can access
+  // these utility methods.
+  // Using ArrayBuffer methods on SharedArrayBuffer instances is valid, as both
+  // classes wrap a JSArrayBuffer handle.
+  // Using the equivalent V8 cast will fail if V8_ENABLE_CHECKS is enabled,
+  // since it will check the underlying handle's is_shared flag.
+  const v8::ArrayBuffer* handle = static_cast<v8::ArrayBuffer*>(*buffer);
   is_immutable_ = handle->IsImmutable();
   is_resizable_by_user_js_ = handle->IsResizableByUserJavaScript();
   was_detached_ = handle->WasDetached();
