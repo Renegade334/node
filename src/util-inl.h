@@ -641,14 +641,14 @@ void ArrayBufferViewContents<T, S>::ReadValue(v8::Local<v8::Value> value) {
     Read(value.As<v8::ArrayBufferView>());
   } else if (value->IsArrayBuffer()) {
     v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
-    data_ = ab->Data();
+    data_ = static_cast<T*>(ab->Data());
     length_ = ab->ByteLength();
     is_immutable_ = ab->IsImmutable();
     is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
     was_detached_ = ab->WasDetached();
   } else if (value->IsSharedArrayBuffer()) {
     v8::Local<v8::SharedArrayBuffer> sab = value.As<v8::SharedArrayBuffer>();
-    data_ = sab->Data();
+    data_ = static_cast<T*>(sab->Data());
     length_ = sab->ByteLength();
     is_resizable_by_user_js_ =
         static_cast<v8::ArrayBuffer*>(*value)->IsResizableByUserJavaScript();

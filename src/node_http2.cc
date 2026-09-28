@@ -3385,7 +3385,7 @@ void Http2Session::Ping(const FunctionCallbackInfo<Value>& args) {
 
   // A PING frame may have exactly 8 bytes of payload data. If not provided,
   // then the current hrtime will be used as the payload.
-  ArrayBufferViewContents<uint8_t> payload;
+  ArrayBufferViewContents<uint8_t, 8> payload;
   if (args[0]->IsArrayBufferView()) {
     payload.Read(args[0].As<ArrayBufferView>());
     CHECK_EQ(payload.length(), 8);
