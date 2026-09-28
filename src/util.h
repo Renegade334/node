@@ -663,7 +663,7 @@ class ArrayBufferViewContents {
 // JSArrayBuffer's is_shared flag.
 // To get around this, we can use a thin wrapper around the handle pointer, which
 // is valid for the lifetime of the Local that it's constructed from.
-struct ArrayBufferHandle {
+class ArrayBufferHandle {
  public:
   inline ArrayBufferHandle(v8::Local<v8::Value> value) {
     DCHECK(value->IsArrayBuffer() || value->IsSharedArrayBuffer());
