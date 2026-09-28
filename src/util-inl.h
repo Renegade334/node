@@ -589,14 +589,14 @@ void MaybeStackBuffer<T, kStackStorageSize>::AllocateSufficientStorage(
 }
 
 template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
+  requires(sizeof(T) == 1)
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Value> value) {
   ReadValue(value);
 }
 
 template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
+  requires(sizeof(T) == 1)
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Object> value) {
   CHECK(value->IsArrayBufferView());
@@ -604,21 +604,21 @@ ArrayBufferViewContents<T>::ArrayBufferViewContents(
 }
 
 template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
+  requires(sizeof(T) == 1)
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::ArrayBufferView> abv) {
   Read(abv);
 }
 
 template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
+  requires(sizeof(T) == 1)
 void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
-  std::span<uint8_t> memory =
-      abv->GetContents({stack_storage_, sizeof(stack_storage_)});
-  data_ = static_cast<void*>(memory.data());
-  length_ = memory.size();
+  length_ = abv->ByteLength();
   if (abv->HasBuffer()) {
     v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
+    if (length_ > 0) {
+      data_ = static_cast<T*>(buffer->Data()) + abv->ByteOffset();
+    }
     if (buffer->IsSharedArrayBuffer()) {
       is_shared_ = true;
     } else {
@@ -626,11 +626,16 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
       was_detached_ = buffer->WasDetached();
     }
     is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
+  } else if (length_ > sizeof(stack_storage_)) {
+    data_ = static_cast<T*>(abv->Buffer()->Data()) + abv->ByteOffset();
+  } else {
+    abv->CopyContents(static_cast<void*>(stack_storage_),
+                      sizeof(stack_storage_));
   }
 }
 
 template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
+  requires(sizeof(T) == 1)
 void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
   if (value->IsArrayBufferView()) [[likely]] {
     Read(value.As<v8::ArrayBufferView>());
