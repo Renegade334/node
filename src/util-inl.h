@@ -618,7 +618,7 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   data_ = static_cast<void*>(memory.data());
   length_ = memory.size();
   if (abv->HasBuffer()) {
-    SetFlags(abv->Buffer());
+    SetFlags(abv->Buffer(), true);
   }
 }
 
@@ -631,12 +631,11 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
     v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
     data_ = ab->Data();
     length_ = ab->ByteLength();
-    SetFlags(ab);
+    SetFlags(ab, false);
   } else if (value->IsSharedArrayBuffer()) {
     v8::Local<v8::SharedArrayBuffer> sab = value.As<v8::SharedArrayBuffer>();
     data_ = sab->Data();
     length_ = sab->ByteLength();
-    is_shared_ = true;
     SetFlags(sab);
   } else {
     UNREACHABLE();
@@ -645,18 +644,24 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
 
 template <typename T>
   requires(sizeof(T) == sizeof(uint8_t))
-void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::Value> buffer) {
-  // We need to unwrap the handle pointer to cast from SharedArrayBuffer to
-  // ArrayBuffer, so that we can use the following utility methods.
-  // This is valid under the hood, as both objects are JSArrayBuffer handles in
-  // V8, with an is_shared flag to identify one from the other.
-  // However, the V8 API will refuse to cast one to the other if
-  // V8_ENABLE_CHECKS is active, as it runs a CHECK against the is_shared flag.
-  const v8::ArrayBuffer* ab = static_cast<v8::ArrayBuffer*>(*buffer);
-  is_immutable_ = ab->IsImmutable();
+void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::ArrayBuffer> buffer,
+                                          bool maybe_shared) {
+  if (maybe_shared && ab->IsSharedArrayBuffer()) {
+    is_shared_ = true;
+  } else {
+    is_immutable_ = ab->IsImmutable();
+    was_detached_ = ab->WasDetached();
+  }
   is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
-  is_shared_ = ab->IsSharedArrayBuffer();
-  was_detached_ = ab->WasDetached();
+}
+
+template <typename T>
+  requires(sizeof(T) == sizeof(uint8_t))
+void ArrayBufferViewContents<T>::SetFlags(
+    v8::Local<v8::SharedArrayBuffer> buffer) {
+  is_shared_ = true;
+  is_resizable_by_user_js_ =
+      static_cast<v8::ArrayBuffer*>(*buffer)->IsResizableByUserJavaScript();
 }
 
 // ECMA-262, 15th edition, 21.1.2.5. Number.isSafeInteger
