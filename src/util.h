@@ -647,7 +647,7 @@ class ArrayBufferViewContents {
   T* data_ = nullptr;
   size_t length_ = 0;
   bool is_immutable_ = false;
-  bool is_resizable_by_js_ = false;
+  bool is_resizable_by_user_js_ = false;
   bool was_detached_ = false;
 };
 
