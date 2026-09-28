@@ -633,13 +633,13 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
     v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
     data_ = ab->Data();
     length_ = ab->ByteLength();
-    SetFlags(*ab);
+    SetFlags(*value);
   } else if (value->IsSharedArrayBuffer()) {
     v8::Local<v8::SharedArrayBuffer> sab = value.As<v8::SharedArrayBuffer>();
     data_ = sab->Data();
     length_ = sab->ByteLength();
     is_shared_ = true;
-    SetFlags(*sab);
+    SetFlags(*value);
   } else {
     UNREACHABLE();
   }
