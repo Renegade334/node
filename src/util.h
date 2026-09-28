@@ -657,10 +657,10 @@ class ArrayBufferViewContents {
 // Most of the V8 API's array buffer utility methods are only available on the
 // ArrayBuffer class, not the SharedArrayBuffer class.
 // ArrayBuffers and SharedArrayBuffers are both JSArrayBuffer handles in V8, and
-// the API occasionally treats them as equivalent.
-// However, casting between the API classes triggers an assertion if
-// V8_ENABLE_CHECKS is enabled, as this triggers a check for the value of the
-// JSArrayBuffer's is_shared flag.
+// the API occasionally treats them as interchangeable.
+// However, casting from SharedArrayBuffer to ArrayBuffer in the API triggers an 
+// assertion if // V8_ENABLE_CHECKS is enabled, as this triggers a check for the value
+// of the JSArrayBuffer's is_shared flag.
 // To get around this, we can use a thin wrapper around the handle pointer, which
 // is valid for the lifetime of the Local that it's constructed from.
 class ArrayBufferHandle {
