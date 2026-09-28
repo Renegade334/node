@@ -623,7 +623,7 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> value);
 
-  inline const T* data() const { return static_cast<T*>(data_); }
+  inline const T* data() const { return data_; }
   inline size_t length() const { return length_; }
 
   inline bool IsImmutable() const { return is_immutable_; }
