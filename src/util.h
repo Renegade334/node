@@ -608,7 +608,7 @@ class MaybeStackBuffer<T, kStackStorageSize> {
 // Provides access to an ArrayBufferView's storage, either the original,
 // or for small data, a copy of it. This object's lifetime is bound to the
 // original ArrayBufferView's lifetime.
-template <typename T, size_t kStackStorageSize = 64>
+template <typename T>
   requires(sizeof(T) == 1)
 class ArrayBufferViewContents {
  public:
@@ -623,9 +623,15 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> buf);
 
+  inline const T* Data() const { return data_; }
+  inline size_t Length() const { return length_; }
+  inline bool IsImmutable() const { return is_immutable_; }
   inline bool WasDetached() const { return was_detached_; }
-  inline const T* data() const { return data_; }
-  inline size_t length() const { return length_; }
+
+  // In theory, a custom build could increase V8's kMaxSizeInHeap through a
+  // custom define for V8_TYPED_ARRAY_MAX_SIZE_IN_HEAP. This value is not
+  // available to embedders, so we have to assume the default value.
+  static constexpr size_t kMaxSizeInHeap = 64;
 
  private:
   // Declaring operator new and delete as deleted is not spec compliant.
@@ -635,10 +641,28 @@ class ArrayBufferViewContents {
   void operator delete(void*, size_t);
   void operator delete[](void*, size_t);
 
-  T stack_storage_[kStackStorageSize];
+  explicit inline void SetFlags(const v8::ArrayBuffer* buffer);
+
+  T stack_storage_[kMaxSizeInHeap];
   T* data_ = nullptr;
   size_t length_ = 0;
+  bool is_immutable_ = false;
+  bool is_resizable_by_js_ = false;
   bool was_detached_ = false;
+};
+
+struct ArrayBufferHandle {
+ public:
+  ArrayBufferHandle(v8::Local<v8::Value> value) {
+    DCHECK(value->IsArrayBuffer() || value->IsSharedArrayBuffer());
+    handle_ = static_cast<v8::ArrayBuffer*>(*value);
+  }
+  v8::ArrayBuffer* operator->() const { return handle_; }
+  v8::ArrayBuffer* operator*() const { return handle_; }
+  operator v8::ArrayBuffer*() const { return handle_; }
+
+ private:
+  v8::ArrayBuffer* handle_;
 };
 
 // Creates a BackingStore with the contents of |data|. |deleter| runs once V8

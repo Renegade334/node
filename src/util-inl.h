@@ -588,64 +588,61 @@ void MaybeStackBuffer<T, kStackStorageSize>::AllocateSufficientStorage(
   length_ = storage;
 }
 
-template <typename T, size_t S>
+template <typename T>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
+ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Value> value) {
-  DCHECK(value->IsArrayBufferView() || value->IsSharedArrayBuffer() ||
-         value->IsArrayBuffer());
   ReadValue(value);
 }
 
-template <typename T, size_t S>
+template <typename T>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
+ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Object> value) {
   CHECK(value->IsArrayBufferView());
   Read(value.As<v8::ArrayBufferView>());
 }
 
-template <typename T, size_t S>
+template <typename T>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
+ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::ArrayBufferView> abv) {
   Read(abv);
 }
 
-template <typename T, size_t S>
+template <typename T>
   requires(sizeof(T) == 1)
-void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
-  was_detached_ = abv->Buffer()->WasDetached();
-  length_ = abv->ByteLength();
-  if (length_ > sizeof(stack_storage_) || abv->HasBuffer()) {
-    auto buf_data = abv->Buffer()->Data();
-    data_ = buf_data != nullptr ? static_cast<T*>(buf_data) + abv->ByteOffset()
-                                : stack_storage_;
-  } else {
-    abv->CopyContents(stack_storage_, sizeof(stack_storage_));
-    data_ = stack_storage_;
+void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
+  std::span<uint8_t> memory = abv->GetContents(
+      {static_cast<uint8_t*>(stack_storage_), sizeof(stack_storage_)});
+  data_ = static_cast<T*>(memory.data());
+  length_ = memory.size();
+  if (abv->HasBuffer()) {
+    SetFlags(*abv->Buffer());
   }
 }
 
-template <typename T, size_t S>
+template <typename T>
   requires(sizeof(T) == 1)
-void ArrayBufferViewContents<T, S>::ReadValue(v8::Local<v8::Value> buf) {
-  DCHECK(buf->IsArrayBufferView() || buf->IsSharedArrayBuffer() ||
-         buf->IsArrayBuffer());
-
+void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
   if (buf->IsArrayBufferView()) {
     Read(buf.As<v8::ArrayBufferView>());
-  } else if (buf->IsArrayBuffer()) {
-    auto ab = buf.As<v8::ArrayBuffer>();
-    length_ = ab->ByteLength();
-    data_ = static_cast<T*>(ab->Data());
-    was_detached_ = ab->WasDetached();
+  } else if (buf->IsArrayBuffer() || buf->IsSharedArrayBuffer()) {
+    ArrayBufferHandle handle(buf);
+    length_ = handle->ByteLength();
+    data_ = static_cast<T*>(handle->Data());
+    SetFlags(handle);
   } else {
-    CHECK(buf->IsSharedArrayBuffer());
-    auto sab = buf.As<v8::SharedArrayBuffer>();
-    length_ = sab->ByteLength();
-    data_ = static_cast<T*>(sab->Data());
+    UNREACHABLE();
   }
+}
+
+template <typename T>
+  requires(sizeof(T) == 1)
+void ArrayBufferViewContents<T>::SetFlags(const v8::ArrayBuffer* buffer) {
+  is_immutable_ = buffer->IsImmutable();
+  is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
+  was_detached_ = buffer->WasDetached();
 }
 
 // ECMA-262, 15th edition, 21.1.2.5. Number.isSafeInteger
