@@ -646,7 +646,13 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
 template <typename T>
   requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::Value> buffer) {
-  v8::Local<v8::ArrayBuffer> ab = v8::LocalBase<v8::ArrayBuffer>(buffer);
+  // We need to unwrap the handle pointer to cast from SharedArrayBuffer to
+  // ArrayBuffer, so that we can use the following utility methods.
+  // This is valid under the hood, as both objects are JSArrayBuffer handles in
+  // V8, with an is_shared flag to identify one from the other.
+  // However, the V8 API will refuse to cast one to the other if
+  // V8_ENABLE_CHECKS is active, as it runs a CHECK against the is_shared flag.
+  const v8::ArrayBuffer* ab = static_cast<v8::ArrayBuffer*>(*buffer);
   is_immutable_ = ab->IsImmutable();
   is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
   is_shared_ = ab->IsSharedArrayBuffer();
