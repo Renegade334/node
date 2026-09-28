@@ -622,7 +622,6 @@ void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
     if (buffer->IsSharedArrayBuffer()) {
       is_shared_ = true;
     } else {
-      is_immutable_ = buffer->IsImmutable();
       was_detached_ = buffer->WasDetached();
     }
     is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
@@ -643,7 +642,6 @@ void ArrayBufferViewContents<T, S>::ReadValue(v8::Local<v8::Value> value) {
     v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
     data_ = static_cast<T*>(ab->Data());
     length_ = ab->ByteLength();
-    is_immutable_ = ab->IsImmutable();
     is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
     was_detached_ = ab->WasDetached();
   } else if (value->IsSharedArrayBuffer()) {

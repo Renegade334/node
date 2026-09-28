@@ -626,7 +626,6 @@ class ArrayBufferViewContents {
   inline const T* data() const { return data_; }
   inline size_t length() const { return length_; }
 
-  inline bool IsImmutable() const { return is_immutable_; }
   inline bool IsResizableByUserJavaScript() const {
     return is_resizable_by_user_js_;
   }
@@ -644,7 +643,6 @@ class ArrayBufferViewContents {
   T stack_storage_[kStackStorageSize];
   T* data_ = stack_storage_;
   size_t length_ = 0;
-  bool is_immutable_ = false;
   bool is_resizable_by_user_js_ = false;
   bool is_shared_ = false;
   bool was_detached_ = false;
