@@ -623,7 +623,7 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> buf);
 
-  inline const T* Data() const { return static_cast<T*>(data_); }
+  inline const T* Data() const { return reinterpret_cast<T*>(data_); }
   inline const T* data() const { return Data(); } ///////////////////////////
   inline size_t Length() const { return length_; }
   inline size_t length()  const { return Length(); } ////////////////////////
@@ -658,9 +658,9 @@ class ArrayBufferViewContents {
 // ArrayBuffer class, not the SharedArrayBuffer class.
 // ArrayBuffers and SharedArrayBuffers are both JSArrayBuffer handles in V8, and
 // the API occasionally treats them as equivalent.
-// However, casting directly from one to the other triggers an assertion if
-// V8_ENABLE_CHECKS is enabled, as the cast checks the value of the JSArrayBuffer's
-// is_shared flag.
+// However, casting between the API classes triggers an assertion if
+// V8_ENABLE_CHECKS is enabled, as this triggers a check for the value of the
+// JSArrayBuffer's is_shared flag.
 // To get around this, we can use a thin wrapper around the handle pointer, which
 // is valid for the lifetime of the Local that it's constructed from.
 struct ArrayBufferHandle {
