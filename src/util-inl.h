@@ -618,20 +618,28 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   data_ = static_cast<void*>(memory.data());
   length_ = memory.size();
   if (abv->HasBuffer()) {
-    SetFlags(*abv->Buffer());
+    v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
+    is_shared_ = buffer->IsSharedArrayBuffer();
+    SetFlags(*buffer);
   }
 }
 
 template <typename T>
   requires(sizeof(T) == sizeof(uint8_t))
-void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
-  if (buf->IsArrayBufferView()) [[likely]] {
-    Read(buf.As<v8::ArrayBufferView>());
-  } else if (buf->IsArrayBuffer() || buf->IsSharedArrayBuffer()) {
-    ArrayBufferHandle handle(buf);
-    data_ = handle->Data();
-    length_ = handle->ByteLength();
-    SetFlags(*handle);
+void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
+  if (value->IsArrayBufferView()) [[likely]] {
+    Read(value.As<v8::ArrayBufferView>());
+  } else if (value->IsArrayBuffer()) {
+    v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
+    data_ = ab->Data();
+    length_ = ab->ByteLength();
+    SetFlags(*ab);
+  } else if (value->IsSharedArrayBuffer()) {
+    v8::Local<v8::SharedArrayBuffer> sab = value.As<v8::SharedArrayBuffer>();
+    data_ = sab->Data();
+    length_ = sab->ByteLength();
+    is_shared_ = true;
+    SetFlags(*sab);
   } else {
     UNREACHABLE();
   }

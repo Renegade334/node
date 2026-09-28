@@ -621,7 +621,7 @@ class ArrayBufferViewContents {
   explicit inline ArrayBufferViewContents(v8::Local<v8::Object> value);
   explicit inline ArrayBufferViewContents(v8::Local<v8::ArrayBufferView> abv);
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
-  inline void ReadValue(v8::Local<v8::Value> buf);
+  inline void ReadValue(v8::Local<v8::Value> value);
 
   inline const T* data() const { return static_cast<T*>(data_); }
   inline size_t length() const { return length_; }
@@ -630,6 +630,7 @@ class ArrayBufferViewContents {
   inline bool IsResizableByUserJavaScript() const {
     return is_resizable_by_user_js_;
   }
+  inline bool IsShared() const { return is_shared_; }
   inline bool WasDetached() const { return was_detached_; }
 
   // In theory, a custom build could increase V8's kMaxSizeInHeap through a
@@ -652,30 +653,8 @@ class ArrayBufferViewContents {
   size_t length_ = 0;
   bool is_immutable_ = false;
   bool is_resizable_by_user_js_ = false;
+  bool is_shared_ = false;
   bool was_detached_ = false;
-};
-
-// Most of the V8 API's array buffer utility methods are only available on the
-// ArrayBuffer class, not the SharedArrayBuffer class.
-// ArrayBuffers and SharedArrayBuffers are both JSArrayBuffer handles in V8, and
-// the API occasionally treats them as interchangeable.
-// However, casting from SharedArrayBuffer to ArrayBuffer in the API triggers an
-// assertion if V8_ENABLE_CHECKS is enabled, as this triggers a check for the
-// value of the JSArrayBuffer's is_shared flag.
-// To get around this, we can use a
-// thin wrapper around the handle pointer, which is valid for the lifetime of
-// the Local that it's constructed from.
-class ArrayBufferHandle {
- public:
-  inline ArrayBufferHandle(v8::Local<v8::Value> value) {
-    DCHECK(value->IsArrayBuffer() || value->IsSharedArrayBuffer());
-    handle_ = static_cast<v8::ArrayBuffer*>(*value);
-  }
-  inline v8::ArrayBuffer* operator->() const { return handle_; }
-  inline v8::ArrayBuffer* operator*() const { return handle_; }
-
- private:
-  v8::ArrayBuffer* handle_;
 };
 
 // Creates a BackingStore with the contents of |data|. |deleter| runs once V8
