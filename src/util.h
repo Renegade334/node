@@ -646,7 +646,7 @@ class ArrayBufferViewContents {
   void operator delete(void*, size_t);
   void operator delete[](void*, size_t);
 
-  inline void SetFlags(const v8::ArrayBuffer* buffer);
+  inline void SetFlags(v8::Local<v8::Value> buffer);
 
   uint8_t stack_storage_[kMaxSizeInHeap];
   void* data_ = nullptr;
