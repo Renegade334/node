@@ -623,10 +623,9 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> buf);
 
-  inline const T* Data() const { return static_cast<T*>(data_); }
-  inline const T* data() const { return Data(); }  ///////////////////////////
-  inline size_t Length() const { return length_; }
-  inline size_t length() const { return Length(); }  ////////////////////////
+  inline const T* data() const { return static_cast<T*>(data_); }
+  inline size_t length() const { return length_; }
+
   inline bool IsImmutable() const { return is_immutable_; }
   inline bool IsResizableByUserJavaScript() const {
     return is_resizable_by_user_js_;
