@@ -623,16 +623,17 @@ class ArrayBufferViewContents {
   inline void Read(v8::Local<v8::ArrayBufferView> abv);
   inline void ReadValue(v8::Local<v8::Value> buf);
 
-  inline const T* Data() const { return data_; }
+  inline const T* Data() const { return static_cast<T*>(data_); }
   inline const T* data() const { return Data(); } ///////////////////////////
   inline size_t Length() const { return length_; }
   inline size_t length()  const { return Length(); } ////////////////////////
   inline bool IsImmutable() const { return is_immutable_; }
+  inline bool IsResizableByUserJavaScript() const { return is_resizable_by_user_js; }
   inline bool WasDetached() const { return was_detached_; }
 
   // In theory, a custom build could increase V8's kMaxSizeInHeap through a
   // custom define for V8_TYPED_ARRAY_MAX_SIZE_IN_HEAP. This value is not
-  // available to embedders, so we have to assume the default value.
+  // visible to embedders, so we have to assume the default value.
   static constexpr size_t kMaxSizeInHeap = 64;
 
  private:
@@ -645,8 +646,8 @@ class ArrayBufferViewContents {
 
   inline void SetFlags(const v8::ArrayBuffer* buffer);
 
-  T stack_storage_[kMaxSizeInHeap];
-  T* data_ = nullptr;
+  uint8_t stack_storage_[kMaxSizeInHeap];
+  uint8_t* data_ = nullptr;
   size_t length_ = 0;
   bool is_immutable_ = false;
   bool is_resizable_by_user_js_ = false;

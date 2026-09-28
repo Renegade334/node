@@ -613,9 +613,8 @@ ArrayBufferViewContents<T>::ArrayBufferViewContents(
 template <typename T>
   requires(sizeof(T) == 1)
 void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
-  std::span<uint8_t> memory = abv->GetContents(
-      {reinterpret_cast<uint8_t*>(&stack_storage_), sizeof(stack_storage_)});
-  data_ = reinterpret_cast<T*>(memory.data());
+  std::span<uint8_t> memory = abv->GetContents({stack_storage_, sizeof(stack_storage_)});
+  data_ = memory.data();
   length_ = memory.size();
   if (abv->HasBuffer()) {
     SetFlags(*abv->Buffer());
@@ -625,7 +624,7 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
 template <typename T>
   requires(sizeof(T) == 1)
 void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
-  if (buf->IsArrayBufferView()) {
+  if (buf->IsArrayBufferView()) [[likely]] {
     Read(buf.As<v8::ArrayBufferView>());
   } else if (buf->IsArrayBuffer() || buf->IsSharedArrayBuffer()) {
     ArrayBufferHandle handle(buf);
