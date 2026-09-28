@@ -624,7 +624,9 @@ class ArrayBufferViewContents {
   inline void ReadValue(v8::Local<v8::Value> buf);
 
   inline const T* Data() const { return data_; }
+  inline const T* data() const { return Data(); } ///////////////////////////
   inline size_t Length() const { return length_; }
+  inline size_t length()  const { return Length(); } ////////////////////////
   inline bool IsImmutable() const { return is_immutable_; }
   inline bool WasDetached() const { return was_detached_; }
 
@@ -659,7 +661,6 @@ struct ArrayBufferHandle {
   }
   v8::ArrayBuffer* operator->() const { return handle_; }
   v8::ArrayBuffer* operator*() const { return handle_; }
-  operator v8::ArrayBuffer*() const { return handle_; }
 
  private:
   v8::ArrayBuffer* handle_;

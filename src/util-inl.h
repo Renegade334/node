@@ -631,7 +631,7 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
     ArrayBufferHandle handle(buf);
     length_ = handle->ByteLength();
     data_ = static_cast<T*>(handle->Data());
-    SetFlags(handle);
+    SetFlags(*handle);
   } else {
     UNREACHABLE();
   }
