@@ -646,17 +646,11 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
 template <typename T>
   requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::Value> buffer) {
-  is_shared_ = buffer->IsSharedArrayBuffer();
-  // Implicit cast of SharedArrayBuffer to ArrayBuffer so that we can access
-  // these utility methods.
-  // Using ArrayBuffer methods on SharedArrayBuffer instances is valid, as both
-  // classes wrap a JSArrayBuffer handle.
-  // Using the equivalent V8 cast will fail if V8_ENABLE_CHECKS is enabled,
-  // since it will check the underlying handle's is_shared flag.
-  const v8::ArrayBuffer* handle = static_cast<v8::ArrayBuffer*>(*buffer);
-  is_immutable_ = handle->IsImmutable();
-  is_resizable_by_user_js_ = handle->IsResizableByUserJavaScript();
-  was_detached_ = handle->WasDetached();
+  v8::Local<v8::ArrayBuffer> ab = v8::LocalBase<v8::ArrayBuffer>(buffer);
+  is_immutable_ = ab->IsImmutable();
+  is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
+  is_shared_ = ab->IsSharedArrayBuffer();
+  was_detached_ = ab->WasDetached();
 }
 
 // ECMA-262, 15th edition, 21.1.2.5. Number.isSafeInteger
