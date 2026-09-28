@@ -609,7 +609,7 @@ class MaybeStackBuffer<T, kStackStorageSize> {
 // or for small data, a copy of it. This object's lifetime is bound to the
 // original ArrayBufferView's lifetime.
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 class ArrayBufferViewContents {
  public:
   ArrayBufferViewContents() = default;
@@ -628,7 +628,7 @@ class ArrayBufferViewContents {
   inline size_t Length() const { return length_; }
   inline size_t length()  const { return Length(); } ////////////////////////
   inline bool IsImmutable() const { return is_immutable_; }
-  inline bool IsResizableByUserJavaScript() const { return is_resizable_by_user_js; }
+  inline bool IsResizableByUserJavaScript() const { return is_resizable_by_user_js_; }
   inline bool WasDetached() const { return was_detached_; }
 
   // In theory, a custom build could increase V8's kMaxSizeInHeap through a

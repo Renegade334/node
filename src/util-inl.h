@@ -589,14 +589,14 @@ void MaybeStackBuffer<T, kStackStorageSize>::AllocateSufficientStorage(
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Value> value) {
   ReadValue(value);
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::Object> value) {
   CHECK(value->IsArrayBufferView());
@@ -604,14 +604,14 @@ ArrayBufferViewContents<T>::ArrayBufferViewContents(
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 ArrayBufferViewContents<T>::ArrayBufferViewContents(
     v8::Local<v8::ArrayBufferView> abv) {
   Read(abv);
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   std::span<uint8_t> memory = abv->GetContents({stack_storage_, sizeof(stack_storage_)});
   data_ = memory.data();
@@ -622,7 +622,7 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
   if (buf->IsArrayBufferView()) [[likely]] {
     Read(buf.As<v8::ArrayBufferView>());
@@ -637,7 +637,7 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> buf) {
 }
 
 template <typename T>
-  requires(sizeof(T) == 1)
+  requires(sizeof(T) == sizeof(uint8_t))
 void ArrayBufferViewContents<T>::SetFlags(const v8::ArrayBuffer* buffer) {
   is_immutable_ = buffer->IsImmutable();
   is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
