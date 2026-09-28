@@ -618,7 +618,14 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   data_ = static_cast<void*>(memory.data());
   length_ = memory.size();
   if (abv->HasBuffer()) {
-    SetFlags(abv->Buffer(), true);
+    v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
+    if (buffer->IsSharedArrayBuffer()) {
+      is_shared_ = true;
+    } else {
+      is_immutable_ = buffer->IsImmutable();
+      was_detached_ = buffer->WasDetached();
+    }
+    is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
   }
 }
 
@@ -631,37 +638,19 @@ void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
     v8::Local<v8::ArrayBuffer> ab = value.As<v8::ArrayBuffer>();
     data_ = ab->Data();
     length_ = ab->ByteLength();
-    SetFlags(ab, false);
+    is_immutable_ = ab->IsImmutable();
+    is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
+    was_detached_ = ab->WasDetached();
   } else if (value->IsSharedArrayBuffer()) {
     v8::Local<v8::SharedArrayBuffer> sab = value.As<v8::SharedArrayBuffer>();
     data_ = sab->Data();
     length_ = sab->ByteLength();
-    SetFlags(sab);
+    is_resizable_by_user_js_ =
+        static_cast<v8::ArrayBuffer*>(*sab)->IsResizableByUserJavaScript();
+    is_shared_ = true;
   } else {
     UNREACHABLE();
   }
-}
-
-template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
-void ArrayBufferViewContents<T>::SetFlags(v8::Local<v8::ArrayBuffer> buffer,
-                                          bool maybe_shared) {
-  if (maybe_shared && ab->IsSharedArrayBuffer()) {
-    is_shared_ = true;
-  } else {
-    is_immutable_ = ab->IsImmutable();
-    was_detached_ = ab->WasDetached();
-  }
-  is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
-}
-
-template <typename T>
-  requires(sizeof(T) == sizeof(uint8_t))
-void ArrayBufferViewContents<T>::SetFlags(
-    v8::Local<v8::SharedArrayBuffer> buffer) {
-  is_shared_ = true;
-  is_resizable_by_user_js_ =
-      static_cast<v8::ArrayBuffer*>(*buffer)->IsResizableByUserJavaScript();
 }
 
 // ECMA-262, 15th edition, 21.1.2.5. Number.isSafeInteger
