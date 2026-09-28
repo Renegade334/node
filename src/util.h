@@ -608,7 +608,7 @@ class MaybeStackBuffer<T, kStackStorageSize> {
 // Provides access to an ArrayBufferView's storage, either the original,
 // or for small data, a copy of it. This object's lifetime is bound to the
 // original ArrayBufferView's lifetime.
-template <typename T>
+template <typename T, size_t kStackStorageSize = 64>
   requires(sizeof(T) == 1)
 class ArrayBufferViewContents {
  public:
@@ -633,8 +633,6 @@ class ArrayBufferViewContents {
   inline bool IsShared() const { return is_shared_; }
   inline bool WasDetached() const { return was_detached_; }
 
-  static constexpr size_t kMaxSizeInHeap = 64;
-
  private:
   // Declaring operator new and delete as deleted is not spec compliant.
   // Therefore, declare them private instead to disable dynamic alloc.
@@ -643,7 +641,7 @@ class ArrayBufferViewContents {
   void operator delete(void*, size_t);
   void operator delete[](void*, size_t);
 
-  T stack_storage_[kMaxSizeInHeap];
+  T stack_storage_[kStackStorageSize];
   T* data_ = stack_storage_;
   size_t length_ = 0;
   bool is_immutable_ = false;

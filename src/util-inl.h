@@ -588,31 +588,31 @@ void MaybeStackBuffer<T, kStackStorageSize>::AllocateSufficientStorage(
   length_ = storage;
 }
 
-template <typename T>
+template <typename T, size_t S>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T>::ArrayBufferViewContents(
+ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
     v8::Local<v8::Value> value) {
   ReadValue(value);
 }
 
-template <typename T>
+template <typename T, size_t S>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T>::ArrayBufferViewContents(
+ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
     v8::Local<v8::Object> value) {
   CHECK(value->IsArrayBufferView());
   Read(value.As<v8::ArrayBufferView>());
 }
 
-template <typename T>
+template <typename T, size_t S>
   requires(sizeof(T) == 1)
-ArrayBufferViewContents<T>::ArrayBufferViewContents(
+ArrayBufferViewContents<T, S>::ArrayBufferViewContents(
     v8::Local<v8::ArrayBufferView> abv) {
   Read(abv);
 }
 
-template <typename T>
+template <typename T, size_t S>
   requires(sizeof(T) == 1)
-void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
+void ArrayBufferViewContents<T, S>::Read(v8::Local<v8::ArrayBufferView> abv) {
   length_ = abv->ByteLength();
   if (abv->HasBuffer()) {
     v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
@@ -634,9 +634,9 @@ void ArrayBufferViewContents<T>::Read(v8::Local<v8::ArrayBufferView> abv) {
   }
 }
 
-template <typename T>
+template <typename T, size_t S>
   requires(sizeof(T) == 1)
-void ArrayBufferViewContents<T>::ReadValue(v8::Local<v8::Value> value) {
+void ArrayBufferViewContents<T, S>::ReadValue(v8::Local<v8::Value> value) {
   if (value->IsArrayBufferView()) [[likely]] {
     Read(value.As<v8::ArrayBufferView>());
   } else if (value->IsArrayBuffer()) {
