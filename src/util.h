@@ -653,6 +653,7 @@ class ArrayBufferReadView {
   T stack_storage_[kStackStorageSize];
   T* data_ = nullptr;
   size_t length_ = 0;
+  bool is_resizable_by_user_js_ = false;
   bool is_shared_ = false;
   bool was_detached_ = false;
 };
