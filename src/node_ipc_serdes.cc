@@ -199,7 +199,7 @@ class IPCSerializerDelegate : public ValueSerializer::Delegate {
           return Nothing<bool>();
         }
       }
-      ArrayBufferViewContents<char> contents(object);
+      ArrayBufferReadView contents(object);
       serializer_->WriteUint32(type_index);
       serializer_->WriteUint32(static_cast<uint32_t>(contents.length()));
       serializer_->WriteRawBytes(contents.data(), contents.length());

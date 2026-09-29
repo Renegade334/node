@@ -699,11 +699,9 @@ void ExportBytes(const FunctionCallbackInfo<Value>& args) {
 
   // This needs to be kept alive until the data
   // is actually copied.
-  ArrayBufferViewContents<uint8_t> view;
+  ArrayBufferReadView<uint8_t> view;
 
-  if (args[0]->IsArrayBuffer() || args[0]->IsSharedArrayBuffer() ||
-      args[0]->IsArrayBufferView()) {
-    view.ReadValue(args[0]);
+  if (view.ReadValue(args[0])) {
     if (view.WasDetached()) {
       THROW_ERR_INVALID_ARG_VALUE(env, "ArrayBuffer is detached");
       return;

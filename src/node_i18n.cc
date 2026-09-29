@@ -110,8 +110,8 @@ MaybeLocal<Object> ToBufferEndian(Environment* env, MaybeStackBuffer<T>* buf) {
     return {};
   }
   if constexpr (sizeof(T) > 1 && IsBigEndian()) {
-    SPREAD_BUFFER_ARG(ret, retbuf);
-    CHECK(nbytes::SwapBytes16(retbuf_data, retbuf_length));
+    ArrayBufferWriteView buffer(ret.As<ArrayBufferView>());
+    CHECK(nbytes::SwapBytes16(buffer.data(), buffer.length()));
   }
 
   return ret;
@@ -281,7 +281,7 @@ void Transcode(const FunctionCallbackInfo<Value>&args) {
   UErrorCode status = U_ZERO_ERROR;
   MaybeLocal<Object> result;
 
-  ArrayBufferViewContents<char> input(args[0]);
+  ArrayBufferReadView input(args[0]);
   const enum encoding fromEncoding = ParseEncoding(isolate, args[1], BUFFER);
   const enum encoding toEncoding = ParseEncoding(isolate, args[2], BUFFER);
 
@@ -432,7 +432,7 @@ void ConverterObject::Decode(const FunctionCallbackInfo<Value>& args) {
         "ArrayBuffer or ArrayBufferView.");
   }
 
-  ArrayBufferViewContents<char> input(args[1]);
+  ArrayBufferReadView input(args[1]);
   uint32_t flags;
   if (!args[2]->Uint32Value(env->context()).To(&flags)) {
     return;

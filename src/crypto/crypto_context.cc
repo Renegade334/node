@@ -2352,7 +2352,7 @@ void SecureContext::SetTicketKeys(const FunctionCallbackInfo<Value>& args) {
 
   CHECK_GE(args.Length(), 1);  // Ticket keys argument is mandatory
   CHECK(args[0]->IsArrayBufferView());
-  ArrayBufferViewContents<char> buf(args[0].As<ArrayBufferView>());
+  ArrayBufferReadView buf(args[0].As<ArrayBufferView>());
 
   CHECK_EQ(buf.length(), 48);
 
@@ -2478,12 +2478,12 @@ int SecureContext::TicketKeyCallback(SSL* ssl,
     iv_val.As<ArrayBufferView>()->CopyContents(iv, kTicketPartSize);
   }
 
-  ArrayBufferViewContents<unsigned char> hmac_buf(hmac);
+  ArrayBufferReadView<unsigned char> hmac_buf(hmac);
   if (!InitTicketHmac(hctx, hmac_buf.data(), hmac_buf.length())) {
     return -1;
   }
 
-  ArrayBufferViewContents<unsigned char> aes_key(aes.As<ArrayBufferView>());
+  ArrayBufferReadView<unsigned char> aes_key(aes.As<ArrayBufferView>());
   if (enc) {
     EVP_EncryptInit_ex(
         ectx, Cipher::AES_128_CBC(), nullptr, aes_key.data(), iv);

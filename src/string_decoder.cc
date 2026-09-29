@@ -260,7 +260,7 @@ void DecodeData(const FunctionCallbackInfo<Value>& args) {
   CHECK_NOT_NULL(decoder);
 
   CHECK(args[1]->IsArrayBufferView());
-  ArrayBufferViewContents<char> content(args[1].As<ArrayBufferView>());
+  ArrayBufferReadView content(args[1].As<ArrayBufferView>());
   size_t length = content.length();
 
   Local<String> ret;

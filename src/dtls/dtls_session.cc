@@ -977,7 +977,7 @@ void DTLSSession::DoSend(const FunctionCallbackInfo<Value>& args) {
                                       "data must be a TypedArray or DataView");
   }
 
-  ArrayBufferViewContents<uint8_t> view(args[0].As<ArrayBufferView>());
+  ArrayBufferReadView<uint8_t> view(args[0].As<ArrayBufferView>());
   const uint8_t* data = view.data();
   size_t len = view.length();
 

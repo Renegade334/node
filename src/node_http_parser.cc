@@ -663,7 +663,7 @@ class Parser : public AsyncWrap, public StreamListener {
     Parser* parser;
     ASSIGN_OR_RETURN_UNWRAP(&parser, args.This());
 
-    ArrayBufferViewContents<char> buffer(args[0]);
+    ArrayBufferReadView buffer(args[0]);
 
     Local<Value> ret = parser->Execute(buffer.data(), buffer.length());
 

@@ -609,20 +609,29 @@ class MaybeStackBuffer<T, kStackStorageSize> {
 // If the source is a TypedArray with on-heap storage, copies the contents
 // onto the stack rather than forcing the creation of an ArrayBuffer handle.
 // This object's lifetime is bound to the original buffer's lifetime.
-template <typename T, size_t kStackStorageSize = 64>
-  requires(sizeof(T) == 1)
-class ArrayBufferViewContents {
+template <typename T = char, size_t kStackStorageSize = 64>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+class ArrayBufferReadView {
  public:
-  ArrayBufferViewContents() = default;
+  ArrayBufferReadView() = default;
 
-  ArrayBufferViewContents(const ArrayBufferViewContents&) = delete;
-  void operator=(const ArrayBufferViewContents&) = delete;
+  inline ArrayBufferReadView(v8::Local<v8::Value> value) {
+    CHECK(ReadValue(value));
+  }
+  inline ArrayBufferReadView(v8::Local<v8::ArrayBufferView> abv) {
+    ReadArrayBufferView(abv);
+  }
+  inline ArrayBufferReadView(v8::Local<v8::ArrayBuffer> ab) {
+    ReadArrayBuffer(ab);
+  }
+  inline ArrayBufferReadView(v8::Local<v8::SharedArrayBuffer> sab) {
+    ReadSharedArrayBuffer(sab);
+  }
 
-  explicit inline ArrayBufferViewContents(v8::Local<v8::Value> value);
-  explicit inline ArrayBufferViewContents(v8::Local<v8::Object> value);
-  explicit inline ArrayBufferViewContents(v8::Local<v8::ArrayBufferView> abv);
-  inline void Read(v8::Local<v8::ArrayBufferView> abv);
-  inline void ReadValue(v8::Local<v8::Value> value);
+  bool ReadValue(v8::Local<v8::Value> value);
+  void ReadArrayBufferView(v8::Local<v8::ArrayBufferView> abv);
+  void ReadArrayBuffer(v8::Local<v8::ArrayBuffer> ab);
+  void ReadSharedArrayBuffer(v8::Local<v8::SharedArrayBuffer> sab);
 
   inline const T* data() const { return data_; }
   inline size_t length() const { return length_; }
@@ -642,11 +651,41 @@ class ArrayBufferViewContents {
   void operator delete[](void*, size_t);
 
   T stack_storage_[kStackStorageSize];
-  T* data_ = stack_storage_;
+  T* data_ = nullptr;
   size_t length_ = 0;
-  bool is_resizable_by_user_js_ = false;
   bool is_shared_ = false;
   bool was_detached_ = false;
+};
+
+// Destructures an ArrayBufferView and provides an offset-aware data pointer
+// for writing.
+// This object's lifetime is bound to the original buffer's lifetime.
+template <typename T = char>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+class ArrayBufferWriteView {
+ public:
+  ArrayBufferWriteView(v8::Local<v8::ArrayBufferView> abv);
+
+  inline T* data() const { return data_; }
+  inline size_t length() const { return length_; }
+
+  inline bool IsResizableByUserJavaScript() const {
+    return is_resizable_by_user_js_;
+  }
+  inline bool IsShared() const { return is_shared_; }
+  inline bool WasDetached() const { return was_detached_; }
+
+ private:
+  void* operator new(size_t size);
+  void* operator new[](size_t size);
+  void operator delete(void*, size_t);
+  void operator delete[](void*, size_t);
+
+  T* data_ = nullptr;
+  size_t length_;
+  bool is_resizable_by_user_js_;
+  bool is_shared_;
+  bool was_detached_;
 };
 
 // Creates a BackingStore with the contents of |data|. |deleter| runs once V8
@@ -692,15 +731,6 @@ class BufferValue : public MaybeStackBuffer<char> {
                               length());
   }
 };
-
-#define SPREAD_BUFFER_ARG(val, name)                                           \
-  CHECK((val)->IsArrayBufferView());                                           \
-  v8::Local<v8::ArrayBufferView> name = (val).As<v8::ArrayBufferView>();       \
-  const size_t name##_offset = name->ByteOffset();                             \
-  const size_t name##_length = name->ByteLength();                             \
-  char* const name##_data =                                                    \
-      static_cast<char*>(name->Buffer()->Data()) + name##_offset;              \
-  if (name##_length > 0) CHECK_NE(name##_data, nullptr);
 
 // Use this when a variable or parameter is unused in order to explicitly
 // silence a compiler warning about that.

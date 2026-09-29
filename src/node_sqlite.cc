@@ -325,7 +325,7 @@ void JSValueToSQLiteResult(Isolate* isolate,
     sqlite3_result_text(ctx, *val, val.length(), SQLITE_TRANSIENT);
   } else if (value->IsArrayBufferView() || value->IsArrayBuffer() ||
              value->IsSharedArrayBuffer()) {
-    ArrayBufferViewContents<uint8_t> buf(value);
+    ArrayBufferReadView<uint8_t> buf(value);
     sqlite3_result_blob(ctx, buf.data(), buf.length(), SQLITE_TRANSIENT);
   } else if (value->IsBigInt()) {
     bool lossless;
@@ -3412,7 +3412,7 @@ void Database::ApplyChangeset(const FunctionCallbackInfo<Value>& args) {
   // which could otherwise let it be garbage-collected mid-callback.
   BaseObjectPtr<Database> guard(db);
 
-  ArrayBufferViewContents<uint8_t> buf(args[0]);
+  ArrayBufferReadView<uint8_t> buf(args[0]);
   if (buf.length() > std::numeric_limits<int>::max()) {
     THROW_ERR_OUT_OF_RANGE(env, "The changeset is too large.");
     return;
@@ -3936,7 +3936,7 @@ bool Statement::BindValue(const Local<Value>& value, const int index) {
     r = sqlite3_bind_null(statement_.get(), index);
   } else if (value->IsArrayBufferView() || value->IsArrayBuffer() ||
              value->IsSharedArrayBuffer()) {
-    ArrayBufferViewContents<uint8_t> buf(value);
+    ArrayBufferReadView<uint8_t> buf(value);
     r = sqlite3_bind_blob64(statement_.get(),
                             index,
                             buf.data(),

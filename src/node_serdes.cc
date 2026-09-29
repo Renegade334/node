@@ -283,7 +283,7 @@ void SerializerContext::WriteRawBytes(const FunctionCallbackInfo<Value>& args) {
         ctx->env(), "source must be a TypedArray or a DataView");
   }
 
-  ArrayBufferViewContents<char> bytes(args[0]);
+  ArrayBufferReadView bytes(args[0]);
   ctx->serializer_.WriteRawBytes(bytes.data(), bytes.length());
 }
 

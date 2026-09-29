@@ -455,7 +455,7 @@ void OneShotDigestWithMD(Environment* env,
                       : ncrypto::hashDigest(input, md);
       }
 
-      ArrayBufferViewContents<unsigned char> input(args[3]);
+      ArrayBufferReadView<unsigned char> input(args[3]);
       ncrypto::Buffer<const unsigned char> buffer = {
           .data = input.data(),
           .len = input.length(),
@@ -493,7 +493,7 @@ void OneShotDigestWithMD(Environment* env,
       });
     }
 
-    ArrayBufferViewContents<unsigned char> input(args[3]);
+    ArrayBufferReadView<unsigned char> input(args[3]);
     return ctx.digestUpdate(ncrypto::Buffer<const void>{
         .data = input.data(),
         .len = input.length(),

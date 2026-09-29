@@ -926,7 +926,7 @@ class BrotliCompressionStream final :
             wrap->env(), "dictionary must be an ArrayBufferView if provided");
         return;
       }
-      ArrayBufferViewContents<uint8_t> contents(args[3]);
+      ArrayBufferReadView<uint8_t> contents(args[3]);
       dictionary.assign(contents.data(), contents.data() + contents.length());
     }
 
@@ -1027,14 +1027,14 @@ class ZstdStream final : public CompressionStream<CompressionContext> {
 
     AllocScope alloc_scope(wrap);
     std::string_view dictionary;
-    ArrayBufferViewContents<char> contents;
+    ArrayBufferReadView contents;
     if (args.Length() >= 5 && !args[4]->IsUndefined()) {
       if (!args[4]->IsArrayBufferView()) {
         THROW_ERR_INVALID_ARG_TYPE(
             wrap->env(), "dictionary must be an ArrayBufferView if provided");
         return;
       }
-      contents.ReadValue(args[4]);
+      contents.ReadArrayBufferView(args[4].As<ArrayBufferView>());
       dictionary = std::string_view(contents.data(), contents.length());
     }
 
@@ -2092,7 +2092,7 @@ T CallOnSequence(v8::Isolate* isolate, Local<Value> value, F callback) {
     Utf8Value data(isolate, value);
     return callback(data.out(), data.length());
   } else {
-    ArrayBufferViewContents<char> data(value);
+    ArrayBufferReadView data(value);
     return callback(data.data(), data.length());
   }
 }

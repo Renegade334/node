@@ -98,7 +98,7 @@ void Decode(const v8::FunctionCallbackInfo<v8::Value>& args,
       return;
     callback(ctx, args, decoder.out(), decoder.size());
   } else {
-    ArrayBufferViewContents<char> buf(args[0]);
+    ArrayBufferReadView buf(args[0]);
     callback(ctx, args, buf.data(), buf.length());
   }
 }

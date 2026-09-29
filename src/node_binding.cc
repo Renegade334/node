@@ -807,7 +807,7 @@ static void DLOpenImpl(const FunctionCallbackInfo<Value>& args,
         env,
         permission::PermissionScope::kFileSystemWrite,
         AddonImage::TempDir());
-    ArrayBufferViewContents<char> binary(args[3]);
+    ArrayBufferReadView binary(args[3]);
     if (!image.Materialize(binary.data(), binary.length())) {
       return THROW_ERR_DLOPEN_FAILED(
           env, "%s: %s", image.errmsg().c_str(), *filename);

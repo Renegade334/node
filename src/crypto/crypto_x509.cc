@@ -534,7 +534,7 @@ void GetIssuerCert(const FunctionCallbackInfo<Value>& args) {
 void Parse(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   CHECK(args[0]->IsArrayBufferView());
-  ArrayBufferViewContents<unsigned char> buf(args[0].As<ArrayBufferView>());
+  ArrayBufferReadView<unsigned char> buf(args[0].As<ArrayBufferView>());
   Local<Object> cert;
 
   auto result = X509Pointer::Parse(ncrypto::Buffer<const unsigned char>{
@@ -844,7 +844,7 @@ bool X509Certificate::HasInstance(Environment* env, Local<Value> value) {
 void X509Certificate::NewFromHandle(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   if (args.Length() == 1 && args[0]->IsArrayBufferView()) {
-    ArrayBufferViewContents<unsigned char> buf(args[0].As<ArrayBufferView>());
+    ArrayBufferReadView<unsigned char> buf(args[0].As<ArrayBufferView>());
     auto result = X509Pointer::Parse(ncrypto::Buffer<const unsigned char>{
         .data = buf.data(),
         .len = buf.length(),

@@ -549,7 +549,7 @@ void DynamicLibrary::New(const FunctionCallbackInfo<Value>& args) {
         env,
         permission::PermissionScope::kFileSystemWrite,
         binding::AddonImage::TempDir());
-    ArrayBufferViewContents<char> binary(args[1]);
+    ArrayBufferReadView binary(args[1]);
     if (!image.Materialize(binary.data(), binary.length())) {
       THROW_ERR_FFI_CALL_FAILED(
           env, "dlopen failed: %s: %s", image.errmsg().c_str(), library_path);

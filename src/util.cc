@@ -184,6 +184,85 @@ BufferValue::BufferValue(Isolate* isolate, Local<Value> value) {
   }
 }
 
+template <typename T, size_t S>
+  requires(std::is_integral_v<T> && sizeof(T) == 1) bool
+ArrayBufferReadView<T, S>::ReadValue(v8::Local<v8::Value> value) {
+  if (value->IsArrayBufferView()) [[likely]] {
+    ReadArrayBufferView(value.As<v8::ArrayBufferView>());
+  } else if (value->IsArrayBuffer()) {
+    ReadArrayBuffer(value.As<v8::ArrayBuffer>());
+  } else if (value->IsSharedArrayBuffer()) {
+    ReadSharedArrayBuffer(value.As<v8::SharedArrayBuffer>());
+  } else {
+    return false;
+  }
+  return true;
+}
+
+template <typename T, size_t S>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+void ArrayBufferReadView<T, S>::ReadArrayBufferView(
+    v8::Local<v8::ArrayBufferView> abv) {
+  DCHECK_NULL(data_);
+  length_ = abv->ByteLength();
+  if (abv->HasBuffer()) {
+    v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
+    data_ = (length_ > 0)
+                ? (static_cast<T*>(buffer->Data()) + abv->ByteOffset())
+                : stack_storage_;
+    if (buffer->IsSharedArrayBuffer()) {
+      is_shared_ = true;
+    } else {
+      was_detached_ = buffer->WasDetached();
+    }
+    is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
+  } else if (length_ > sizeof(stack_storage_)) {
+    data_ = static_cast<T*>(abv->Buffer()->Data()) + abv->ByteOffset();
+  } else {
+    abv->CopyContents(static_cast<void*>(stack_storage_),
+                      sizeof(stack_storage_));
+    data_ = stack_storage_;
+  }
+}
+
+template <typename T, size_t S>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+void ArrayBufferReadView<T, S>::ReadArrayBuffer(v8::Local<v8::ArrayBuffer> ab) {
+  DCHECK_NULL(data_);
+  data_ = static_cast<T*>(ab->Data());
+  length_ = ab->ByteLength();
+  is_resizable_by_user_js_ = ab->IsResizableByUserJavaScript();
+  was_detached_ = ab->WasDetached();
+}
+
+template <typename T, size_t S>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+void ArrayBufferReadView<T, S>::ReadSharedArrayBuffer(
+    v8::Local<v8::SharedArrayBuffer> sab) {
+  DCHECK_NULL(data_);
+  data_ = static_cast<T*>(sab->Data());
+  length_ = sab->ByteLength();
+  is_resizable_by_user_js_ =
+      static_cast<v8::ArrayBuffer*>(*value)->IsResizableByUserJavaScript();
+  is_shared_ = true;
+}
+
+template <typename T>
+  requires(std::is_integral_v<T> && sizeof(T) == 1)
+ArrayBufferWriteView<T>::ArrayBufferWriteView(
+    v8::Local<v8::ArrayBufferView> abv) {
+  v8::Local<v8::ArrayBuffer> buffer = abv->Buffer();
+  length_ = abv->ByteLength();
+  if (length_ > 0) {
+    void* data = buffer->Data();
+    CHECK_NOT_NULL(data);
+    data_ = static_cast<char*>(data) + abv->ByteOffset();
+  }
+  is_resizable_by_user_js_ = buffer->IsResizableByUserJavaScript();
+  is_shared_ = buffer->IsSharedArrayBuffer();
+  was_detached_ = buffer->WasDetached();
+}
+
 void LowMemoryNotification() {
   if (per_process::v8_initialized) {
     auto isolate = Isolate::TryGetCurrent();

@@ -70,8 +70,8 @@ bool FastTimingSafeEqual(Local<Value> receiver,
                                "ArrayBuffer, Buffer, TypedArray, or DataView.");
     return false;
   }
-  ArrayBufferViewContents<uint8_t> a(a_obj);
-  ArrayBufferViewContents<uint8_t> b(b_obj);
+  ArrayBufferReadView<uint8_t> a(a_obj);
+  ArrayBufferReadView<uint8_t> b(b_obj);
   if (a.length() != b.length()) {
     TRACK_V8_FAST_API_CALL("crypto.timingSafeEqual.error");
     THROW_ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH(options.isolate);

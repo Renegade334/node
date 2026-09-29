@@ -751,7 +751,7 @@ unsigned int DTLSContext::PSKServerCallback(SSL* ssl,
   }
 
   if (!ret->IsArrayBufferView()) return 0;
-  ArrayBufferViewContents<unsigned char> key(ret.As<ArrayBufferView>());
+  ArrayBufferReadView<unsigned char> key(ret.As<ArrayBufferView>());
   if (key.length() > max_psk_len) return 0;  // measurement: allow empty
 
   memcpy(psk, key.data(), key.length());
@@ -822,7 +822,7 @@ unsigned int DTLSContext::PSKClientCallback(SSL* ssl,
     }
 
     Utf8Value id(env->isolate(), id_val);
-    ArrayBufferViewContents<unsigned char> key(key_val.As<ArrayBufferView>());
+    ArrayBufferReadView<unsigned char> key(key_val.As<ArrayBufferView>());
     use_identity.assign(*id, id.length());
     use_key.assign(key.data(), key.data() + key.length());
   }
@@ -852,7 +852,7 @@ void DTLSContext::SetTicketKeys(const FunctionCallbackInfo<Value>& args) {
   ASSIGN_OR_RETURN_UNWRAP(&ctx, args.This());
 
   CHECK(args[0]->IsArrayBufferView());
-  ArrayBufferViewContents<unsigned char> buf(args[0].As<ArrayBufferView>());
+  ArrayBufferReadView<unsigned char> buf(args[0].As<ArrayBufferView>());
 
   // Key name, HMAC key and AES key concatenated. node:tls installs its own
   // callback and defines a 48-byte layout of its own; this uses OpenSSL's
@@ -900,7 +900,7 @@ void DTLSContext::SetPSK(const FunctionCallbackInfo<Value>& args) {
       CHECK(identity->IsString());
       CHECK(key->IsArrayBufferView());
       Utf8Value id(env->isolate(), identity);
-      ArrayBufferViewContents<unsigned char> buf(key.As<ArrayBufferView>());
+      ArrayBufferReadView<unsigned char> buf(key.As<ArrayBufferView>());
       next[std::string(*id, id.length())] =
           std::vector<unsigned char>(buf.data(), buf.data() + buf.length());
     }
@@ -918,7 +918,7 @@ void DTLSContext::SetPSK(const FunctionCallbackInfo<Value>& args) {
   }
 
   if (args[3]->IsArrayBufferView()) {
-    ArrayBufferViewContents<unsigned char> key(args[3].As<ArrayBufferView>());
+    ArrayBufferReadView<unsigned char> key(args[3].As<ArrayBufferView>());
     ctx->psk_client_key_.assign(key.data(), key.data() + key.length());
   }
 

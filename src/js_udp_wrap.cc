@@ -146,7 +146,7 @@ void JSUDPWrap::EmitReceived(const FunctionCallbackInfo<Value>& args) {
   ASSIGN_OR_RETURN_UNWRAP(&wrap, args.This());
   Environment* env = wrap->env();
 
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
   const char* data = buffer.data();
   int len = buffer.length();
 

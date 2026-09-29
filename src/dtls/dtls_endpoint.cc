@@ -815,9 +815,9 @@ void DTLSEndpoint::DoConnect(const FunctionCallbackInfo<Value>& args) {
   // Optional DER-encoded session to resume. The identity it was authenticated
   // for is checked in JS before it reaches here.
   ncrypto::Buffer<const unsigned char> resume{};
-  ArrayBufferViewContents<unsigned char> resume_buf;
+  ArrayBufferReadView<unsigned char> resume_buf;
   if (args[6]->IsArrayBufferView()) {
-    resume_buf.Read(args[6].As<ArrayBufferView>());
+    resume_buf.ReadArrayBufferView(args[6].As<ArrayBufferView>());
     resume = {resume_buf.data(), resume_buf.length()};
   }
 

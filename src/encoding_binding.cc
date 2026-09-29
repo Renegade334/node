@@ -437,7 +437,7 @@ void BindingData::DecodeUTF8(const FunctionCallbackInfo<Value>& args) {
     isShared = view->Buffer()->IsSharedArrayBuffer();
   }
 
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
 
   bool ignore_bom = args[1]->IsTrue();
   bool has_fatal = args[2]->IsTrue();

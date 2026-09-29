@@ -648,7 +648,7 @@ void TLSWrap::Receive(const FunctionCallbackInfo<Value>& args) {
   TLSWrap* wrap;
   ASSIGN_OR_RETURN_UNWRAP(&wrap, args.This());
 
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
   const char* data = buffer.data();
   size_t len = buffer.length();
   Debug(wrap, "Receiving %zu bytes injected from JS", len);
@@ -1633,7 +1633,7 @@ unsigned int TLSWrap::PskServerCallback(
   if (psk_val.IsEmpty() || !psk_val->IsArrayBufferView()) [[unlikely]]
     return 0;
 
-  ArrayBufferViewContents<char> psk_buf(psk_val);
+  ArrayBufferReadView psk_buf(psk_val);
 
   if (psk_buf.length() > max_psk_len)
     return 0;
@@ -1682,7 +1682,7 @@ unsigned int TLSWrap::PskClientCallback(
   if (psk_val.IsEmpty() || !psk_val->IsArrayBufferView()) [[unlikely]]
     return 0;
 
-  ArrayBufferViewContents<char> psk_buf(psk_val);
+  ArrayBufferReadView psk_buf(psk_val);
   if (psk_buf.length() > max_psk_len)
     return 0;
 
@@ -1798,7 +1798,7 @@ void TLSWrap::SetALPNProtocols(const FunctionCallbackInfo<Value>& args) {
   if (args.Length() < 1 || !Buffer::HasInstance(args[0]))
     return env->ThrowTypeError("Must give a Buffer as first argument");
 
-  ArrayBufferViewContents<uint8_t> protos(args[0].As<ArrayBufferView>());
+  ArrayBufferReadView<uint8_t> protos(args[0].As<ArrayBufferView>());
   SSL* ssl = w->ssl_.get();
   if (w->is_client()) {
     CHECK_EQ(0, SSL_set_alpn_protos(ssl, protos.data(), protos.length()));
@@ -1985,7 +1985,7 @@ void TLSWrap::SetSession(const FunctionCallbackInfo<Value>& args) {
     return THROW_ERR_MISSING_ARGS(env, "Session argument is mandatory");
 
   THROW_AND_RETURN_IF_NOT_BUFFER(env, args[0], "Session");
-  ArrayBufferViewContents<unsigned char> sbuf(args[0]);
+  ArrayBufferReadView<unsigned char> sbuf(args[0]);
   SSLSessionPointer sess = GetTLSSession(sbuf.data(), sbuf.length());
   if (sess == nullptr)
     return;  // TODO(tniessen): figure out error handling
@@ -2046,7 +2046,7 @@ void TLSWrap::LoadSession(const FunctionCallbackInfo<Value>& args) {
 
   // TODO(@sam-github) check arg length and types in js, and CHECK in c++
   if (args.Length() >= 1 && Buffer::HasInstance(args[0])) {
-    ArrayBufferViewContents<unsigned char> sbuf(args[0]);
+    ArrayBufferReadView<unsigned char> sbuf(args[0]);
 
     const unsigned char* p = sbuf.data();
     SSL_SESSION* sess = d2i_SSL_SESSION(nullptr, &p, sbuf.length());

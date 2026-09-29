@@ -2249,7 +2249,7 @@ void Http2Session::Receive(const FunctionCallbackInfo<Value>& args) {
   ASSIGN_OR_RETURN_UNWRAP(&session, args.This());
   CHECK(args[0]->IsObject());
 
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
   const char* data = buffer.data();
   size_t len = buffer.length();
   Debug(session, "Receiving %zu bytes injected from JS", len);
@@ -3110,10 +3110,10 @@ void Http2Session::Goaway(const FunctionCallbackInfo<Value>& args) {
   if (!args[1]->Int32Value(context).To(&lastStreamID)) {
     return;
   }
-  ArrayBufferViewContents<uint8_t> opaque_data;
+  ArrayBufferReadView<uint8_t> opaque_data;
 
   if (args[2]->IsArrayBufferView()) {
-    opaque_data.Read(args[2].As<ArrayBufferView>());
+    opaque_data.ReadArrayBufferView(args[2].As<ArrayBufferView>());
   }
 
   session->Goaway(code, lastStreamID, opaque_data.data(), opaque_data.length());
@@ -3385,9 +3385,9 @@ void Http2Session::Ping(const FunctionCallbackInfo<Value>& args) {
 
   // A PING frame may have exactly 8 bytes of payload data. If not provided,
   // then the current hrtime will be used as the payload.
-  ArrayBufferViewContents<uint8_t, 8> payload;
+  ArrayBufferReadView<uint8_t, 8> payload;
   if (args[0]->IsArrayBufferView()) {
-    payload.Read(args[0].As<ArrayBufferView>());
+    payload.ReadArrayBufferView(args[0].As<ArrayBufferView>());
     CHECK_EQ(payload.length(), 8);
   }
 

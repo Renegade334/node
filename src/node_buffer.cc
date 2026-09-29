@@ -566,7 +566,7 @@ void StringSlice(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = env->isolate();
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
 
   auto buffer_length = buffer.length();
   const char* data_ptr = buffer.data();
@@ -679,28 +679,29 @@ void Fill(const FunctionCallbackInfo<Value>& args) {
   Local<Context> ctx = env->context();
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
 
   size_t start = 0;
   THROW_AND_RETURN_IF_OOB(ParseArrayIndex(env, args[2], 0, &start));
   size_t end;
   THROW_AND_RETURN_IF_OOB(ParseArrayIndex(env, args[3], 0, &end));
 
-  size_t fill_length = end - start;
+  size_t bytes_to_fill = end - start;
   Local<String> str_obj;
   size_t str_length;
   enum encoding enc;
 
   // OOB Check. Throw the error in JS.
-  if (start > end || fill_length + start > ts_obj_length)
+  if (start > end || bytes_to_fill + start > buffer.length())
     return args.GetReturnValue().Set(-2);
 
   // First check if Buffer has been passed.
   if (Buffer::HasInstance(args[1])) {
-    SPREAD_BUFFER_ARG(args[1], fill_obj);
-    str_length = fill_obj_length;
-    memcpy(
-        ts_obj_data + start, fill_obj_data, std::min(str_length, fill_length));
+    ArrayBufferReadView fill(args[1].As<ArrayBufferView>());
+    str_length = fill.length();
+    memcpy(buffer.data() + start,
+           fill.data(),
+           std::min(str_length, bytes_to_fill));
     goto start_fill;
   }
 
@@ -709,7 +710,7 @@ void Fill(const FunctionCallbackInfo<Value>& args) {
     uint32_t val;
     if (!args[1]->Uint32Value(ctx).To(&val)) return;
     int value = val & 255;
-    memset(ts_obj_data + start, value, fill_length);
+    memset(buffer.data() + start, value, bytes_to_fill);
     return;
   }
 
@@ -723,7 +724,7 @@ void Fill(const FunctionCallbackInfo<Value>& args) {
   if (enc == UTF8) {
     str_length = str_obj->Utf8LengthV2(env->isolate());
     node::Utf8Value str(env->isolate(), args[1]);
-    memcpy(ts_obj_data + start, *str, std::min(str_length, fill_length));
+    memcpy(buffer.data() + start, *str, std::min(str_length, bytes_to_fill));
 
   } else if (enc == UCS2) {
     str_length = str_obj->Length() * sizeof(uint16_t);
@@ -731,20 +732,19 @@ void Fill(const FunctionCallbackInfo<Value>& args) {
     if constexpr (IsBigEndian())
       CHECK(nbytes::SwapBytes16(reinterpret_cast<char*>(&str[0]), str_length));
 
-    memcpy(ts_obj_data + start, *str, std::min(str_length, fill_length));
+    memcpy(buffer.data() + start, *str, std::min(str_length, bytes_to_fill));
 
   } else {
     // Write initial String to Buffer, then use that memory to copy remainder
     // of string. Correct the string length for cases like HEX where less than
     // the total string length is written.
     str_length = StringBytes::Write(
-        env->isolate(), ts_obj_data + start, fill_length, str_obj, enc);
+        env->isolate(), buffer.data() + start, bytes_to_fill, str_obj, enc);
   }
 
 start_fill:
 
-  if (str_length >= fill_length)
-    return;
+  if (str_length >= bytes_to_fill) return;
 
   // If str_length is zero, then either an empty buffer was provided, or Write()
   // indicated that no bytes could be written. If no bytes could be written,
@@ -755,16 +755,16 @@ start_fill:
     return args.GetReturnValue().Set(-1);
 
   size_t in_there = str_length;
-  char* ptr = ts_obj_data + start + str_length;
+  char* ptr = buffer.data() + start + str_length;
 
-  while (in_there < fill_length - in_there) {
-    memcpy(ptr, ts_obj_data + start, in_there);
+  while (in_there < bytes_to_fill - in_there) {
+    memcpy(ptr, buffer.data() + start, in_there);
     ptr += in_there;
     in_there *= 2;
   }
 
-  if (in_there < fill_length) {
-    memcpy(ptr, ts_obj_data + start, fill_length - in_there);
+  if (in_there < bytes_to_fill) {
+    memcpy(ptr, buffer.data() + start, bytes_to_fill - in_there);
   }
 }
 
@@ -774,34 +774,30 @@ void StringWrite(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
 
   THROW_AND_RETURN_IF_NOT_STRING(env, args[1], "argument");
-
-  Local<String> str;
-  if (!args[1]->ToString(env->context()).ToLocal(&str)) {
-    return;
-  }
+  Local<String> str = args[1].As<String>();
 
   size_t offset = 0;
   size_t max_length = 0;
 
   THROW_AND_RETURN_IF_OOB(ParseArrayIndex(env, args[2], 0, &offset));
-  if (offset > ts_obj_length) {
+  if (offset > buffer.length()) {
     return node::THROW_ERR_BUFFER_OUT_OF_BOUNDS(
         env, "\"offset\" is outside of buffer bounds");
   }
 
   THROW_AND_RETURN_IF_OOB(
-      ParseArrayIndex(env, args[3], ts_obj_length - offset, &max_length));
+      ParseArrayIndex(env, args[3], buffer.length() - offset, &max_length));
 
-  max_length = std::min(ts_obj_length - offset, max_length);
+  max_length = std::min(buffer.length() - offset, max_length);
 
   if (max_length == 0)
     return args.GetReturnValue().Set(0);
 
   uint32_t written = StringBytes::Write(
-      env->isolate(), ts_obj_data + offset, max_length, str, encoding);
+      env->isolate(), buffer.data() + offset, max_length, str, encoding);
   args.GetReturnValue().Set(written);
 }
 
@@ -916,8 +912,8 @@ void CompareOffset(const FunctionCallbackInfo<Value> &args) {
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[1]);
-  ArrayBufferViewContents<char> source(args[0]);
-  ArrayBufferViewContents<char> target(args[1]);
+  ArrayBufferReadView source(args[0]);
+  ArrayBufferReadView target(args[1]);
 
   size_t target_start = 0;
   size_t source_start = 0;
@@ -956,8 +952,8 @@ void CompareOffset(const FunctionCallbackInfo<Value> &args) {
 }
 
 int32_t CompareImpl(Local<Value> a_obj, Local<Value> b_obj) {
-  ArrayBufferViewContents<char> a(a_obj);
-  ArrayBufferViewContents<char> b(b_obj);
+  ArrayBufferReadView a(a_obj);
+  ArrayBufferReadView b(b_obj);
 
   size_t cmp_length = std::min(a.length(), b.length());
 
@@ -1038,7 +1034,7 @@ void IndexOfString(const FunctionCallbackInfo<Value>& args) {
   enum encoding enc = static_cast<enum encoding>(args[3].As<Int32>()->Value());
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
-  ArrayBufferViewContents<char> buffer(args[0]);
+  ArrayBufferReadView buffer(args[0]);
 
   Local<String> needle = args[1].As<String>();
   int64_t offset_i64 = args[2].As<Integer>()->Value();
@@ -1173,8 +1169,8 @@ void IndexOfBuffer(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[1]);
-  ArrayBufferViewContents<char> haystack_contents(args[0]);
-  ArrayBufferViewContents<char> needle_contents(args[1]);
+  ArrayBufferReadView haystack_contents(args[0]);
+  ArrayBufferReadView needle_contents(args[1]);
   int64_t offset_i64 = args[2].As<Integer>()->Value();
   bool is_forward = args[4]->IsTrue();
   int64_t end_i64 = args[5].As<Integer>()->Value();
@@ -1254,7 +1250,7 @@ int64_t IndexOfNumberImpl(Local<Value> buffer_obj,
                           const int64_t offset_i64,
                           const int64_t end_i64,
                           const bool is_forward) {
-  ArrayBufferViewContents<uint8_t> buffer(buffer_obj);
+  ArrayBufferReadView<uint8_t> buffer(buffer_obj);
   const uint8_t* buffer_data = buffer.data();
   const size_t buffer_length = buffer.length();
   int64_t opt_offset = IndexOfOffset(buffer_length, offset_i64, 1, is_forward);
@@ -1313,8 +1309,8 @@ static CFunction fast_index_of_number(CFunction::Make(FastIndexOfNumber));
 
 void Swap16(const FunctionCallbackInfo<Value>& args) {
   DCHECK(args[0]->IsArrayBufferView());
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
-  CHECK(nbytes::SwapBytes16(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes16(buffer.data(), buffer.length()));
 }
 
 void FastSwap16(Local<Value> receiver,
@@ -1323,16 +1319,16 @@ void FastSwap16(Local<Value> receiver,
                 FastApiCallbackOptions& options) {
   TRACK_V8_FAST_API_CALL("buffer.swap16");
   HandleScope scope(options.isolate);
-  SPREAD_BUFFER_ARG(buffer_obj, ts_obj);
-  CHECK(nbytes::SwapBytes16(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(buffer_obj.As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes16(buffer.data(), buffer.length()));
 }
 
 static CFunction fast_swap16(CFunction::Make(FastSwap16));
 
 void Swap32(const FunctionCallbackInfo<Value>& args) {
   DCHECK(args[0]->IsArrayBufferView());
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
-  CHECK(nbytes::SwapBytes32(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes32(buffer.data(), buffer.length()));
 }
 
 void FastSwap32(Local<Value> receiver,
@@ -1341,16 +1337,16 @@ void FastSwap32(Local<Value> receiver,
                 FastApiCallbackOptions& options) {
   TRACK_V8_FAST_API_CALL("buffer.swap32");
   HandleScope scope(options.isolate);
-  SPREAD_BUFFER_ARG(buffer_obj, ts_obj);
-  CHECK(nbytes::SwapBytes32(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(buffer_obj.As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes16(buffer.data(), buffer.length()));
 }
 
 static CFunction fast_swap32(CFunction::Make(FastSwap32));
 
 void Swap64(const FunctionCallbackInfo<Value>& args) {
   DCHECK(args[0]->IsArrayBufferView());
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
-  CHECK(nbytes::SwapBytes64(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes64(buffer.data(), buffer.length()));
 }
 
 void FastSwap64(Local<Value> receiver,
@@ -1359,14 +1355,14 @@ void FastSwap64(Local<Value> receiver,
                 FastApiCallbackOptions& options) {
   TRACK_V8_FAST_API_CALL("buffer.swap64");
   HandleScope scope(options.isolate);
-  SPREAD_BUFFER_ARG(buffer_obj, ts_obj);
-  CHECK(nbytes::SwapBytes64(ts_obj_data, ts_obj_length));
+  ArrayBufferWriteView buffer(buffer_obj.As<ArrayBufferView>());
+  CHECK(nbytes::SwapBytes64(buffer.data(), buffer.length()));
 }
 
 static CFunction fast_swap64(CFunction::Make(FastSwap64));
 
 static bool ValidateUtf8(Local<Value> value) {
-  ArrayBufferViewContents<char> abv(value);
+  ArrayBufferReadView abv(value);
   return abv.length() == 0 || simdutf::validate_utf8(abv.data(), abv.length());
 }
 
@@ -1390,7 +1386,7 @@ static bool FastIsUtf8(Local<Value> receiver,
 static CFunction fast_is_utf8(CFunction::Make(FastIsUtf8));
 
 static bool ValidateAscii(Local<Value> value) {
-  ArrayBufferViewContents<char> abv(value);
+  ArrayBufferReadView abv(value);
   return abv.length() == 0 ||
          !simdutf::validate_ascii_with_errors(abv.data(), abv.length()).error;
 }
@@ -1487,7 +1483,7 @@ static size_t Utf16LengthFromInvalidUtf8(const uint8_t* p, const uint8_t* end) {
 }
 
 static double StringLengthUtf8Impl(Local<Value> value) {
-  ArrayBufferViewContents<uint8_t> abv(value);
+  ArrayBufferReadView<uint8_t> abv(value);
   const uint8_t* data = abv.data();
   const size_t length = abv.length();
   if (length == 0) return 0;
@@ -1832,28 +1828,24 @@ void SlowWriteString(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
 
   THROW_AND_RETURN_UNLESS_BUFFER(env, args[0]);
-  SPREAD_BUFFER_ARG(args[0], ts_obj);
+  ArrayBufferWriteView buffer(args[0].As<ArrayBufferView>());
 
   THROW_AND_RETURN_IF_NOT_STRING(env, args[1], "argument");
-
-  Local<String> str;
-  if (!args[1]->ToString(env->context()).ToLocal(&str)) {
-    return;
-  }
+  Local<String> str = args[1].As<String>();
 
   size_t offset = 0;
   size_t max_length = 0;
 
   THROW_AND_RETURN_IF_OOB(ParseArrayIndex(env, args[2], 0, &offset));
-  if (offset > ts_obj_length) {
+  if (offset > buffer.length()) {
     return node::THROW_ERR_BUFFER_OUT_OF_BOUNDS(
         env, "\"offset\" is outside of buffer bounds");
   }
 
   THROW_AND_RETURN_IF_OOB(
-      ParseArrayIndex(env, args[3], ts_obj_length - offset, &max_length));
+      ParseArrayIndex(env, args[3], buffer.length() - offset, &max_length));
 
-  max_length = std::min(ts_obj_length - offset, max_length);
+  max_length = std::min(buffer.length() - offset, max_length);
 
   if (max_length == 0) return args.GetReturnValue().Set(0);
 
@@ -1863,10 +1855,10 @@ void SlowWriteString(const FunctionCallbackInfo<Value>& args) {
       str->IsExternalOneByte()) {
     const auto src = str->GetExternalOneByteStringResource();
     written = WriteOneByteString<encoding>(
-        src->data(), src->length(), ts_obj_data + offset, max_length);
+        src->data(), src->length(), buffer.data() + offset, max_length);
   } else {
     written = StringBytes::Write(
-        env->isolate(), ts_obj_data + offset, max_length, str, encoding);
+        env->isolate(), buffer.data() + offset, max_length, str, encoding);
   }
 
   args.GetReturnValue().Set(written);
@@ -1889,16 +1881,16 @@ uint32_t FastWriteString(Local<Value> receiver,
   // trigger a GC before the FastOneByteString is used. Take care when
   // modifying this code to ensure that no operations would trigger a GC.
   HandleScope handle_scope(options.isolate);
-  SPREAD_BUFFER_ARG(dst_obj, dst);
-  CHECK(offset <= dst_length);
-  CHECK(dst_length - offset <= std::numeric_limits<uint32_t>::max());
+  ArrayBufferWriteView dst(dst_obj.As<ArrayBufferView>());
+  CHECK(offset <= dst.length());
+  CHECK(dst.length() - offset <= std::numeric_limits<uint32_t>::max());
   TRACK_V8_FAST_API_CALL("buffer.writeString");
 
   return WriteOneByteString<encoding>(
       src.data,
       src.length,
-      reinterpret_cast<char*>(dst_data + offset),
-      std::min<uint32_t>(dst_length - offset, max_length));
+      dst.data() + offset,
+      std::min<uint32_t>(dst.length() - offset, max_length));
 }
 
 static const CFunction fast_write_string_ascii(
